@@ -22,7 +22,7 @@ public class Utils {
 		return false;
 	}
 
-	public static String updateMD5Checksum(String file) throws IOException, NoSuchAlgorithmException
+	public static String getMD5Checksum(String file) throws IOException, NoSuchAlgorithmException
 	{		
 		byte[] bytes = Files.readAllBytes(Paths.get(file));
 		byte[] hash = MessageDigest.getInstance("MD5").digest(bytes);

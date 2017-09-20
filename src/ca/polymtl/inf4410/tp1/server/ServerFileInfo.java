@@ -17,7 +17,7 @@ public class ServerFileInfo
 	{
 		serverPathToFile = pathToFile;
 		this.name = name;
-		checksum = Utils.updateMD5Checksum(serverPathToFile + name);
+		checksum = Utils.getMD5Checksum(serverPathToFile + name);
 	}
 	
 	public String getName()
