@@ -32,35 +32,53 @@ public class Client {
 			String serverIpaddress = null;
 
 			if (args.length > 0) {
-				if(args[0].split("\\.").length != 4)
+				if(args[0].split("\\.").length != 4 && args.length < 3)
 				{
 					throw new IllegalArgumentException();
 				}
 				serverIpaddress = args[0];
+				
+				Client client = new Client(serverIpaddress);
+				if(args.length > 1)
+				{
+					switch(args[1].toLowerCase())
+					{
+						case "create":
+							client.create(args[2]);
+							break;
+						case "list":
+							client.list();
+							break;
+						case "synclocaldir":
+							client.syncLocalDir();
+							break;
+						case "get":
+							client.get(args[2]);
+							break;
+						case "lock":
+							client.lock(args[2]);
+							break;
+						case "push":
+							client.push(args[2]);
+							break;
+						case "default":
+							printUsage();
+							break;
+							
+					}
+				}
+				else
+				{
+					printUsage();
+				}
 			}
-
-			Client client = new Client(serverIpaddress);
-			switch(args[1].toLowerCase())
+			else
 			{
-				case "create":
-					client.create(args[2]);
-					break;
-				case "list":
-					client.list();
-					break;
-				case "synclocaldir":
-					client.syncLocalDir();
-					break;
-				case "get":
-					client.get(args[2]);
-					break;
-				case "lock":
-					client.lock(args[2]);
-					break;
+				printUsage();
 			}
 		} catch(IllegalArgumentException e)
 		{
-			//print usage.
+			printUsage();
 		}
 		catch(Exception e)
 		{
@@ -131,7 +149,14 @@ public class Client {
 				synchronizedFiles.append(file.getFileName() + ", ");
 			}
 		}
-		System.out.println(synchronizedFiles.toString() + " synchronise.");
+		if(synchronizedFiles.length() > 0)
+		{
+			System.out.println(synchronizedFiles.toString() + " synchronise.");
+		}
+		else
+		{
+			System.out.println("Aucun fichier a synchronise.");
+		}
 	}
 	
 	private void get(String fileName) throws NoSuchAlgorithmException, IOException
@@ -159,6 +184,20 @@ public class Client {
 			System.out.println(fileName + " synchronise");
 		}
 		System.out.println(pair.getKey());
+	}
+	
+	private void push(String fileName) throws IOException, NoSuchAlgorithmException
+	{
+		File file = new File(CLIENTFILESFOLDER + SEPARATOR + fileName);
+		if(file.exists())
+		{
+			ServerFile fileToSend = Utils.serializeFile(fileName, file);
+			System.out.println(serverStub.push(fileToSend, clientId));
+		}
+		else
+		{
+			System.out.println("Le fichier " + fileName + " n'existe pas.");
+		}
 	}
 	
 	private void writeFileToDisk(ServerFile file) throws IOException
@@ -219,6 +258,21 @@ public class Client {
 			return true;
 		}
 		return false;
+	}
+	
+	private static void printUsage()
+	{
+		System.out.println("*************************************************************************************************************");
+		System.out.println("Usage : ");
+		System.out.println("./client <ipadress> <operation>");
+		System.out.println("Operations : ");
+		System.out.println("create <fileName> : creates an empty file on the server.");
+		System.out.println("list : lists all the files on the server as well as their lock status and owner.");
+		System.out.println("synclocaldir : synchronizes all the files that are on the server inside the ClientFilesFolder directory.");
+		System.out.println("get <fileName> : synchronizes a specific file from the server after a checksum verification.");
+		System.out.println("lock <fileName> : locks a specific file on the server so no other client can modify it.");
+		System.out.println("push <fileName> : pushes the file specified on the server if the client initially acquired the lock on it.");
+		System.out.println("*************************************************************************************************************");
 	}
 
 }

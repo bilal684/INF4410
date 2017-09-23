@@ -46,4 +46,9 @@ public class ServerFileInfo
 	public String getChecksum() {
 		return checksum;
 	}
+	
+	public void updateChecksum() throws NoSuchAlgorithmException, IOException
+	{
+		checksum = Utils.getMD5Checksum(serverPathToFile + name);
+	}
 }

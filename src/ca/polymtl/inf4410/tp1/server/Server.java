@@ -2,7 +2,7 @@ package ca.polymtl.inf4410.tp1.server;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -25,7 +25,7 @@ import ca.polymtl.inf4410.tp1.shared.Utils;
 public class Server implements ServerInterface {
 
 
-	private static final String FILESDIRECTORY = "FileVault";
+	private static final String FILESDIRECTORY = "ServerFilesFolder";
 	private static final String SEPARATOR = "/";
 	private static final String SERVERCONFIGDIRECTORY = "ServerConfig";
 	private static final String LATESTUNUSEDIDFILE = "latestUnusedId.txt";
@@ -58,7 +58,7 @@ public class Server implements ServerInterface {
 			Registry registry = LocateRegistry.getRegistry();
 			registry.rebind("server", stub);
 			addProcessShutdownHook();
-			populateFileSet();
+			populateFileMap();
 			System.out.println("Server ready.");
 		} catch (ConnectException e) {
 			System.err
@@ -105,30 +105,20 @@ public class Server implements ServerInterface {
 		for(ServerFileInfo fileInfo : fileMap.values())
 		{
 			File physicalServerFile = new File(FILESDIRECTORY + SEPARATOR + fileInfo.getName());
-			byte[] bytes = new byte[(int) physicalServerFile.length()];
-			FileInputStream fileStream = new FileInputStream(physicalServerFile);
-			fileStream.read(bytes);
-			ServerFile file = new ServerFile(fileInfo.getName(), bytes);
+			ServerFile file = Utils.serializeFile(fileInfo.getName(), physicalServerFile);
 			files.add(file);
-			fileStream.close();
 		}
 		return files;
 	}
 	
 	public Map.Entry<String, ServerFile> get(String fileName, String checksum) throws IOException {
-		//ServerFile fileToSend = null;
-		ServerFile fileToSend;
 		Pair<String, ServerFile> pair = null;
 		if(fileMap.containsKey(fileName))
 		{
 			if(checksum.equals("-1") || !checksum.equals(fileMap.get(fileName).getChecksum()))
 			{
 				File physicalServerFile = new File(FILESDIRECTORY + SEPARATOR + fileName);
-				byte[] bytes = new byte[(int) physicalServerFile.length()];
-				FileInputStream fileStream = new FileInputStream(physicalServerFile);
-				fileStream.read(bytes);
-				fileToSend = new ServerFile(fileName, bytes);
-				fileStream.close();
+				ServerFile fileToSend = Utils.serializeFile(fileName, physicalServerFile);
 				pair = new Pair<String, ServerFile>("", fileToSend);
 			}
 			else
@@ -168,7 +158,32 @@ public class Server implements ServerInterface {
 		return pair;
 	}
 	
-	private void populateFileSet() throws NoSuchAlgorithmException, IOException
+	public String push(ServerFile file, String clientId) throws IOException, NoSuchAlgorithmException {
+		String message = null;
+		if(fileMap.get(file.getFileName()).getLocked() && fileMap.get(file.getFileName()).getOwner().equals(clientId))
+		{
+			writeFileToServerDisk(file);
+			fileMap.get(file.getFileName()).setLocked(false);
+			fileMap.get(file.getFileName()).setOwner(null);
+			fileMap.get(file.getFileName()).updateChecksum();
+			message = file.getFileName() + " a ete envoye au serveur.";
+		}
+		else
+		{
+			message = "Operation refusee : vous devez verrouiller le fichier avant d'executer cette operation.";
+		}
+		return message;
+	}
+	
+	private void writeFileToServerDisk(ServerFile file) throws IOException
+	{
+		Utils.createDirectory(FILESDIRECTORY);
+		FileOutputStream outputStream = new FileOutputStream(new File(FILESDIRECTORY + SEPARATOR + file.getFileName()));
+		outputStream.write(file.getContent());
+		outputStream.close();
+	}
+	
+	private void populateFileMap() throws NoSuchAlgorithmException, IOException
 	{
 		File folder = new File(FILESDIRECTORY);
 		if(folder.exists())
@@ -239,6 +254,5 @@ public class Server implements ServerInterface {
 			return true;
 		}
 		return false;
-	}
-	
+	}	
 }

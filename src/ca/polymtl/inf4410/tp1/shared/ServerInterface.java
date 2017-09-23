@@ -13,4 +13,5 @@ public interface ServerInterface extends Remote {
 	public List<ServerFile> syncLocalDir() throws RemoteException, IOException;
 	public Map.Entry<String, ServerFile> get(String fileName, String checksum) throws RemoteException, IOException;
 	public Map.Entry<String, ServerFile> lock(String fileName, String clientId, String checksum) throws RemoteException, IOException;
+	public String push(ServerFile file, String clientId) throws RemoteException, IOException, NoSuchAlgorithmException;
 }

@@ -1,6 +1,7 @@
 package ca.polymtl.inf4410.tp1.shared;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -29,4 +30,13 @@ public class Utils {
 		return DatatypeConverter.printHexBinary(hash);
 	} 
 	
+	public static ServerFile serializeFile(String fileName, File file) throws IOException
+	{
+		byte[] bytes = new byte[(int) file.length()];
+		FileInputStream fileStream = new FileInputStream(file);
+		fileStream.read(bytes);
+		ServerFile fileToSend = new ServerFile(fileName, bytes);
+		fileStream.close();
+		return fileToSend;
+	}
 }
