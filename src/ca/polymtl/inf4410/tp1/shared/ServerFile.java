@@ -4,6 +4,7 @@ import java.io.Serializable;
 
 public class ServerFile implements Serializable {
 	
+	private static final long serialVersionUID = 361417043140836160L;
 	private String fileName;
 	private byte[] content;
 	

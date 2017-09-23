@@ -13,10 +13,11 @@ import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 
+import ca.polymtl.inf4410.tp1.shared.Pair;
 import ca.polymtl.inf4410.tp1.shared.ServerFile;
 import ca.polymtl.inf4410.tp1.shared.ServerInterface;
 import ca.polymtl.inf4410.tp1.shared.Utils;
@@ -28,7 +29,7 @@ public class Server implements ServerInterface {
 	private static final String SEPARATOR = "/";
 	private static final String SERVERCONFIGDIRECTORY = "ServerConfig";
 	private static final String LATESTUNUSEDIDFILE = "latestUnusedId.txt";
-	private Set<ServerFileInfo> filesInfo;
+	private Map<String,ServerFileInfo> fileMap;
 	private int latestId;
 
 	public static void main(String[] args) throws NumberFormatException, IOException {
@@ -38,7 +39,7 @@ public class Server implements ServerInterface {
 
 	public Server() throws NumberFormatException, IOException {
 		super();
-		filesInfo = new HashSet<ServerFileInfo>();
+		fileMap = new HashMap<>();
 		if(!loadLatestUnusedId())
 		{
 			latestId = 0;
@@ -76,13 +77,12 @@ public class Server implements ServerInterface {
 	
 
 	public String create(String nomFichier) throws RemoteException, IOException, NoSuchAlgorithmException {
-		
 		Utils.createDirectory(FILESDIRECTORY);
 		File file = new File(FILESDIRECTORY + SEPARATOR + nomFichier);
 		if(file.createNewFile())
 		{
 			ServerFileInfo fileInfo = new ServerFileInfo(FILESDIRECTORY + SEPARATOR, nomFichier);
-			filesInfo.add(fileInfo);
+			fileMap.put(nomFichier, fileInfo);
 			return nomFichier + " ajoute.";
 		}
 		return "Le fichier " + nomFichier + " existe deja.";
@@ -91,18 +91,18 @@ public class Server implements ServerInterface {
 	public String list()
 	{
 		StringBuilder allFiles = new StringBuilder();
-		for(ServerFileInfo fileInfo : filesInfo)
+		for(ServerFileInfo fileInfo : fileMap.values())
 		{
 			allFiles.append("* " + fileInfo.getName() + ((fileInfo.getLocked()) ? " verrouille par client " + fileInfo.getOwner() : " non verrouille") + "\n");
 		}
-		allFiles.append(filesInfo.size() + " fichier(s)");
+		allFiles.append(fileMap.size() + " fichier(s)");
 		return allFiles.toString();
 	}
 	
 	public List<ServerFile> syncLocalDir() throws IOException
 	{
 		List<ServerFile> files = new ArrayList<>();
-		for(ServerFileInfo fileInfo : filesInfo)
+		for(ServerFileInfo fileInfo : fileMap.values())
 		{
 			File physicalServerFile = new File(FILESDIRECTORY + SEPARATOR + fileInfo.getName());
 			byte[] bytes = new byte[(int) physicalServerFile.length()];
@@ -113,6 +113,59 @@ public class Server implements ServerInterface {
 			fileStream.close();
 		}
 		return files;
+	}
+	
+	public Map.Entry<String, ServerFile> get(String fileName, String checksum) throws IOException {
+		//ServerFile fileToSend = null;
+		ServerFile fileToSend;
+		Pair<String, ServerFile> pair = null;
+		if(fileMap.containsKey(fileName))
+		{
+			if(checksum.equals("-1") || !checksum.equals(fileMap.get(fileName).getChecksum()))
+			{
+				File physicalServerFile = new File(FILESDIRECTORY + SEPARATOR + fileName);
+				byte[] bytes = new byte[(int) physicalServerFile.length()];
+				FileInputStream fileStream = new FileInputStream(physicalServerFile);
+				fileStream.read(bytes);
+				fileToSend = new ServerFile(fileName, bytes);
+				fileStream.close();
+				pair = new Pair<String, ServerFile>("", fileToSend);
+			}
+			else
+			{
+				//Fichier deja a jour.
+				pair = new Pair<String, ServerFile>("Le fichier " + fileName + " est deja a jour.", null);
+			}
+		}
+		else
+		{
+			pair = new Pair<String, ServerFile>("Le fichier " + fileName + " n'existe pas au niveau du serveur.", null);
+		}
+		//si null --> Le fichier n'existe pas au niveau du serveur.
+		return pair;
+	}
+	
+	public Map.Entry<String, ServerFile> lock(String fileName, String clientId, String checksum) throws IOException
+	{
+		Pair<String, ServerFile> pair = null;
+		if(fileMap.containsKey(fileName))
+		{
+			if(!fileMap.get(fileName).getLocked())
+			{
+				fileMap.get(fileName).setLocked(true);
+				fileMap.get(fileName).setOwner(clientId);
+				pair = new Pair<String, ServerFile>("Fichier " + fileName + " verrouille.", get(fileName, checksum).getValue());
+			}
+			else
+			{
+				pair = new Pair<String, ServerFile>(fileName + " est deja verrouille par client " + fileMap.get(fileName).getOwner(), null);
+			}
+		}
+		else
+		{
+			pair = new Pair<String, ServerFile>("Le fichier " + fileName + " n'existe pas au niveau du serveur.", null);
+		}
+		return pair;
 	}
 	
 	private void populateFileSet() throws NoSuchAlgorithmException, IOException
@@ -126,7 +179,7 @@ public class Server implements ServerInterface {
 				if(listOfAllFiles[i].isFile())
 				{
 					ServerFileInfo fileInfo = new ServerFileInfo(FILESDIRECTORY + SEPARATOR ,listOfAllFiles[i].getName());
-					filesInfo.add(fileInfo);
+					fileMap.put(fileInfo.getName(), fileInfo);
 				}
 			}
 		}
@@ -146,7 +199,6 @@ public class Server implements ServerInterface {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
-				
 			}
 		}));
 	}

@@ -15,68 +15,74 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 
+import ca.polymtl.inf4410.tp1.shared.Pair;
 import ca.polymtl.inf4410.tp1.shared.ServerFile;
 import ca.polymtl.inf4410.tp1.shared.ServerInterface;
 import ca.polymtl.inf4410.tp1.shared.Utils;
 
 public class Client {
-	private int clientId;
+	private String clientId;
 	private static final String CLIENTCONFIGDIRECTORY = "ClientConfig";
 	private static final String CLIENTFILESFOLDER = "ClientFilesFolder";
 	private static final String SEPARATOR = "/";
 	private static final String CLIENTIDFILE = "clientId.txt";
 	
 	public static void main(String[] args) throws RemoteException, IOException, NoSuchAlgorithmException {
-		String distantHostname = null;
-		int argumentIndex = 0;
+		try {
+			String serverIpaddress = null;
 
-		/*if (args.length > 0) {
-			distantHostname = args[0];
-		}*/
-		
-		//On cherche a ce connecter sur le serveur distant.
-		if(args[0].split(".").length > 0)
+			if (args.length > 0) {
+				if(args[0].split("\\.").length != 4)
+				{
+					throw new IllegalArgumentException();
+				}
+				serverIpaddress = args[0];
+			}
+
+			Client client = new Client(serverIpaddress);
+			switch(args[1].toLowerCase())
+			{
+				case "create":
+					client.create(args[2]);
+					break;
+				case "list":
+					client.list();
+					break;
+				case "synclocaldir":
+					client.syncLocalDir();
+					break;
+				case "get":
+					client.get(args[2]);
+					break;
+				case "lock":
+					client.lock(args[2]);
+					break;
+			}
+		} catch(IllegalArgumentException e)
 		{
-			argumentIndex = 1; //argumentIndex starts at 1.
+			//print usage.
+		}
+		catch(Exception e)
+		{
+			System.err.println(e.getMessage());
 		}
 
-		Client client = new Client(distantHostname);
-		switch(args[argumentIndex].toLowerCase())
-		{
-			case "create":
-				client.create(args[argumentIndex + 1]);
-				break;
-			case "list":
-				client.list();
-				break;
-			case "synclocaldir":
-				client.syncLocalDir();
-				break;
-				
-		}
 	}
 
-	/*FakeServer localServer = null; // Pour tester la latence d'un appel de
-									// fonction normal.*/
-	private ServerInterface localServerStub = null;
-	//private ServerInterface distantServerStub = null;
+	private ServerInterface serverStub = null;
 
 	public Client(String distantServerHostname) throws NumberFormatException, IOException {
 		super();
-
 		if (System.getSecurityManager() == null) {
 			System.setSecurityManager(new SecurityManager());
 		}
 
-		localServerStub = loadServerStub("127.0.0.1");
+		serverStub = loadServerStub(distantServerHostname);
 		if(!loadClientId())
 		{
-			clientId = Integer.parseInt(localServerStub.generateClientId());
+			clientId = serverStub.generateClientId();
 			saveClientId();
 		}
-		/*if (distantServerHostname != null) {
-			distantServerStub = loadServerStub(distantServerHostname);
-		}*/
 	}
 
 	private ServerInterface loadServerStub(String hostname) {
@@ -98,30 +104,85 @@ public class Client {
 	}
 
 	private void create(String nomFichier) throws RemoteException, NoSuchAlgorithmException, IOException	{
-		String result = localServerStub.create(nomFichier);
+		String result = serverStub.create(nomFichier);
 		System.out.println(result);
 	}
 	
 	private void list() throws RemoteException
 	{
-		String result = localServerStub.list();
+		String result = serverStub.list();
 		System.out.println(result);
 	}
 	
 	private void syncLocalDir() throws IOException
 	{
 		List<ServerFile> files = new ArrayList<>();
-		files = localServerStub.syncLocalDir();
+		files = serverStub.syncLocalDir();
+		StringBuilder synchronizedFiles = new StringBuilder();
 		for(ServerFile file : files)
 		{
-			Utils.createDirectory(CLIENTFILESFOLDER);
-			FileOutputStream outputStream = new FileOutputStream(new File(CLIENTFILESFOLDER + SEPARATOR + file.getFileName()));
-			outputStream.write(file.getContent());
-			outputStream.close();
+			writeFileToDisk(file);
+			if(file == files.get(files.size() - 1))
+			{
+				synchronizedFiles.append(file.getFileName());
+			}
+			else
+			{
+				synchronizedFiles.append(file.getFileName() + ", ");
+			}
+		}
+		System.out.println(synchronizedFiles.toString() + " synchronise.");
+	}
+	
+	private void get(String fileName) throws NoSuchAlgorithmException, IOException
+	{
+		String checksum = getFileChecksum(fileName);
+		Pair<String,ServerFile> pair = (Pair<String, ServerFile>) serverStub.get(fileName, checksum);
+		if(pair.getKey().equals(""))
+		{
+			writeFileToDisk(pair.getValue());
+			System.out.println(fileName + " synchronise");
+		}
+		else
+		{
+			System.out.println(pair.getKey());
 		}
 	}
 	
+	private void lock(String fileName) throws NoSuchAlgorithmException, IOException
+	{
+		String checksum =  getFileChecksum(fileName);
+		Pair<String, ServerFile> pair = (Pair<String, ServerFile>) serverStub.lock(fileName, clientId, checksum);
+		if(pair.getValue() != null)
+		{
+			writeFileToDisk(pair.getValue());
+			System.out.println(fileName + " synchronise");
+		}
+		System.out.println(pair.getKey());
+	}
 	
+	private void writeFileToDisk(ServerFile file) throws IOException
+	{
+		Utils.createDirectory(CLIENTFILESFOLDER);
+		FileOutputStream outputStream = new FileOutputStream(new File(CLIENTFILESFOLDER + SEPARATOR + file.getFileName()));
+		outputStream.write(file.getContent());
+		outputStream.close();
+	}
+	
+	private String getFileChecksum(String fileName) throws NoSuchAlgorithmException, IOException
+	{
+		File localFile = new File(CLIENTFILESFOLDER + SEPARATOR + fileName);
+		String checksum = null;
+		if(localFile.exists())
+		{
+			checksum = Utils.getMD5Checksum(CLIENTFILESFOLDER + SEPARATOR + fileName);
+		}
+		else
+		{
+			checksum = "-1";
+		}
+		return checksum;
+	}
 	private void saveClientId() throws IOException
 	{
 		File latestIdFile = new File(CLIENTCONFIGDIRECTORY + SEPARATOR + CLIENTIDFILE);
@@ -132,7 +193,7 @@ public class Client {
 			FileWriter writer = new FileWriter(latestIdFile, false);
 			try
 			{
-				writer.write(Integer.toString(clientId));
+				writer.write(clientId);
 			} finally
 			{
 				writer.close();
@@ -149,7 +210,7 @@ public class Client {
 			BufferedReader textReader = new BufferedReader(fileReader);
 			try
 			{
-				clientId = Integer.parseInt(textReader.readLine());	
+				clientId = textReader.readLine();	
 			} 
 			finally
 			{
@@ -159,46 +220,5 @@ public class Client {
 		}
 		return false;
 	}
-	
-	
-	
-	
 
-	/*private void appelNormal() {
-		long start = System.nanoTime();
-		int result = localServer.execute(4, 7);
-		long end = System.nanoTime();
-
-		System.out.println("Temps écoulé appel normal: " + (end - start)
-				+ " ns");
-		System.out.println("Résultat appel normal: " + result);
-	}
-
-	private void appelRMILocal() {
-		try {
-			long start = System.nanoTime();
-			int result = localServerStub.create();
-			long end = System.nanoTime();
-
-			System.out.println("Temps écoulé appel RMI local: " + (end - start)
-					+ " ns");
-			System.out.println("Résultat appel RMI local: " + result);
-		} catch (RemoteException e) {
-			System.out.println("Erreur: " + e.getMessage());
-		}
-	}
-
-	private void appelRMIDistant() {
-		try {
-			long start = System.nanoTime();
-			int result = distantServerStub.execute(4, 7);
-			long end = System.nanoTime();
-
-			System.out.println("Temps écoulé appel RMI distant: "
-					+ (end - start) + " ns");
-			System.out.println("Résultat appel RMI distant: " + result);
-		} catch (RemoteException e) {
-			System.out.println("Erreur: " + e.getMessage());
-		}
-	}*/
 }
