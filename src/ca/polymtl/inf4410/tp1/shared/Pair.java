@@ -19,17 +19,14 @@ public class Pair<K, V> implements Serializable, Map.Entry<K, V> {
 	}
 	
 	public K getKey() {
-		// TODO Auto-generated method stub
 		return key;
 	}
 
 	public V getValue() {
-		// TODO Auto-generated method stub
 		return value;
 	}
 
 	public V setValue(V value) {
-		// TODO Auto-generated method stub
 		V oldValue = this.value;
 		this.value = value;
 		return oldValue;

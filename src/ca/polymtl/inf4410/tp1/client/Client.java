@@ -27,6 +27,7 @@ public class Client {
 	private static final String SEPARATOR = "/";
 	private static final String CLIENTIDFILE = "clientId.txt";
 	
+	
 	public static void main(String[] args) throws RemoteException, IOException, NoSuchAlgorithmException {
 		try {
 			String serverIpaddress = null;
@@ -61,10 +62,9 @@ public class Client {
 						case "push":
 							client.push(args[2]);
 							break;
-						case "default":
+						default:
 							printUsage();
 							break;
-							
 					}
 				}
 				else
