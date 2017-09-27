@@ -6,6 +6,10 @@ import java.rmi.RemoteException;
 import java.security.NoSuchAlgorithmException;
 import java.util.List;
 import java.util.Map;
+
+/**
+ * Interface contenant les methodes offerte par le serveur et qui seront utilisable par le client.
+ * */
 public interface ServerInterface extends Remote {
 	public String generateClientId() throws RemoteException;
 	public String create(String nomFichier) throws RemoteException, IOException, NoSuchAlgorithmException;

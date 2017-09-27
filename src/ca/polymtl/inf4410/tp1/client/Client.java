@@ -20,6 +20,10 @@ import ca.polymtl.inf4410.tp1.shared.ServerFile;
 import ca.polymtl.inf4410.tp1.shared.ServerInterface;
 import ca.polymtl.inf4410.tp1.shared.Utils;
 
+/**
+ * Cette classe represente le client. Elle contient l'implementation de toutes les methodes
+ * que le client doit offrir.
+ * */
 public class Client {
 	private String clientId;
 	private static final String CLIENTCONFIGDIRECTORY = "ClientConfig";
@@ -27,7 +31,9 @@ public class Client {
 	private static final String SEPARATOR = "/";
 	private static final String CLIENTIDFILE = "clientId.txt";
 	
-	
+	/**
+	 * Cette methode constitue le main du client.
+	 * */
 	public static void main(String[] args) throws RemoteException, IOException, NoSuchAlgorithmException {
 		try {
 			String serverIpaddress = null;
@@ -89,6 +95,9 @@ public class Client {
 
 	private ServerInterface serverStub = null;
 
+	/**
+	 * Constructeur de la classe Client.
+	 * */
 	public Client(String distantServerHostname) throws NumberFormatException, IOException {
 		super();
 		if (System.getSecurityManager() == null) {
@@ -121,17 +130,26 @@ public class Client {
 		return stub;
 	}
 
+	/**
+	 * Permet l'appel de la methode create du serveur a partir du client.
+	 * */
 	private void create(String nomFichier) throws RemoteException, NoSuchAlgorithmException, IOException	{
 		String result = serverStub.create(nomFichier);
 		System.out.println(result);
 	}
 	
+	/**
+	 * Permet l'appel de la methode list du serveur a partir du client.
+	 * */
 	private void list() throws RemoteException
 	{
 		String result = serverStub.list();
 		System.out.println(result);
 	}
 	
+	/**
+	 * Permet l'appel de la methode syncLocalDir du serveur a partir du client.
+	 * */
 	private void syncLocalDir() throws IOException
 	{
 		List<ServerFile> files = new ArrayList<>();
@@ -159,6 +177,9 @@ public class Client {
 		}
 	}
 	
+	/**
+	 * Permet l'appel de la methode get du serveur a partir du client.
+	 * */
 	private void get(String fileName) throws NoSuchAlgorithmException, IOException
 	{
 		String checksum = getFileChecksum(fileName);
@@ -174,6 +195,9 @@ public class Client {
 		}
 	}
 	
+	/**
+	 * Permet l'appel de la methode lock du serveur a partir du client.
+	 * */
 	private void lock(String fileName) throws NoSuchAlgorithmException, IOException
 	{
 		String checksum =  getFileChecksum(fileName);
@@ -186,6 +210,9 @@ public class Client {
 		System.out.println(pair.getKey());
 	}
 	
+	/**
+	 * Permet l'appel de la methode push du serveur a partir du client.
+	 * */
 	private void push(String fileName) throws IOException, NoSuchAlgorithmException
 	{
 		File file = new File(CLIENTFILESFOLDER + SEPARATOR + fileName);
@@ -200,6 +227,9 @@ public class Client {
 		}
 	}
 	
+	/**
+	 * Permet l'ecriture d'un fichier sur le disque dur.
+	 * */
 	private void writeFileToDisk(ServerFile file) throws IOException
 	{
 		Utils.createDirectory(CLIENTFILESFOLDER);
@@ -208,6 +238,10 @@ public class Client {
 		outputStream.close();
 	}
 	
+	/**
+	 * Determine le checksum d'un fichier en utilisant une methode statique de la classe Utils.
+	 * Dans le cas ou le fichier est inexistant, retourne -1
+	 * */
 	private String getFileChecksum(String fileName) throws NoSuchAlgorithmException, IOException
 	{
 		File localFile = new File(CLIENTFILESFOLDER + SEPARATOR + fileName);
@@ -222,6 +256,10 @@ public class Client {
 		}
 		return checksum;
 	}
+	
+	/**
+	 * Permet la sauvegarde du ID unique du client dans un fichier texte.
+	 * */
 	private void saveClientId() throws IOException
 	{
 		File latestIdFile = new File(CLIENTCONFIGDIRECTORY + SEPARATOR + CLIENTIDFILE);
@@ -240,6 +278,10 @@ public class Client {
 		}
 	}
 	
+	/**
+	 * Permet la lecture d'un fichier texte afin de trouver le ID du client, retourne true le cas echeant.
+	 * Dans le cas ou le fichier est inexistant, la methode retourne false.
+	 * */
 	private boolean loadClientId() throws NumberFormatException, IOException
 	{
 		File file = new File(CLIENTCONFIGDIRECTORY + SEPARATOR + CLIENTIDFILE);
@@ -260,6 +302,9 @@ public class Client {
 		return false;
 	}
 	
+	/**
+	 * Methode permettant d'informer l'usager sur la facon dont on peu utiliser le client.
+	 * */
 	private static void printUsage()
 	{
 		System.out.println("*************************************************************************************************************");
