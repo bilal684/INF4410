@@ -82,7 +82,11 @@ public class Client {
 			{
 				printUsage();
 			}
-		} catch(IllegalArgumentException e)
+		}catch(ArrayIndexOutOfBoundsException e)
+		{
+			printUsage();
+		}
+		catch(IllegalArgumentException e)
 		{
 			printUsage();
 		}
@@ -309,7 +313,7 @@ public class Client {
 	{
 		System.out.println("*************************************************************************************************************");
 		System.out.println("Usage : ");
-		System.out.println("./client <ipadress> <operation>");
+		System.out.println("./client <ipaddress> <operation>");
 		System.out.println("Operations : ");
 		System.out.println("create <fileName> : creates an empty file on the server.");
 		System.out.println("list : lists all the files on the server as well as their lock status and owner.");
