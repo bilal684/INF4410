@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<project basedir="." default="build-jar" name="TP1">
+<project basedir="." default="build-jar" name="TP2">
 	<property name="debuglevel" value="source,lines,vars" />
-	<path id="TP1.classpath">
+	<path id="TP2.classpath">
 		<pathelement location="bin" />
 	</path>
 	<target name="init">
@@ -14,19 +14,19 @@
 	</target>
 	<target name="clean">
 		<delete dir="bin" />
-		<delete file="server.jar" />
-		<delete file="client.jar" />
-		<delete file="shared.jar" />
+		<delete file="distributor.jar" />
+		<!--<delete file="client.jar" />-->
+		<!--<delete file="shared.jar" />-->
 	</target>
 	<target depends="init" name="build-class">
 		<javac debug="true" debuglevel="${debuglevel}" destdir="bin" includeantruntime="false">
 			<src path="src" />
-			<classpath refid="TP1.classpath" />
+			<classpath refid="TP2.classpath" />
 		</javac>
 	</target>
 	<target depends="build-class" name="build-jar">
-		<jar destfile="shared.jar" basedir="bin" includes="ca/polymtl/inf4410/tp1/shared/**" update="false" />
-		<jar destfile="server.jar" basedir="bin" includes="ca/polymtl/inf4410/tp1/server/**" update="false" />
-		<jar destfile="client.jar" basedir="bin" includes="ca/polymtl/inf4410/tp1/client/**" update="false" />
+		<jar destfile="distributor.jar" basedir="bin" includes="ca/polymtl/INF4410/TP2/Distributor/**" update="false" />
+		<!--<jar destfile="server.jar" basedir="bin" includes="ca/polymtl/inf4410/tp2/server/**" update="false" />
+		<jar destfile="client.jar" basedir="bin" includes="ca/polymtl/inf4410/tp1/client/**" update="false" />-->
 	</target>
 </project>
