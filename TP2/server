@@ -8,4 +8,4 @@ popd > /dev/null
 java -cp "$basepath"/server.jar:"$basepath"/shared.jar \
   -Djava.rmi.server.codebase=file:"$basepath"/shared.jar \
   -Djava.security.policy="$basepath"/policy \
-  ca.polymtl.inf4410.tp1.server.Server
+  ca.polymtl.INF4410.TP2.Server.Server $*
