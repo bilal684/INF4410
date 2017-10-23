@@ -1,3 +1,5 @@
+package src.ca.polymtl.INF4410.TP2.Utils;
+
 /**
  * Methodes utilitaires pour effectuer les operations du TP2.
  * 
