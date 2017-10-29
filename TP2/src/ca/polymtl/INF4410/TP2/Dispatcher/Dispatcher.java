@@ -1,4 +1,4 @@
-package ca.polymtl.INF4410.TP2.Distributor;
+package ca.polymtl.INF4410.TP2.Dispatcher;
 
 import java.io.BufferedReader;
 import java.io.File;

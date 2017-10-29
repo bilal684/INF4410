@@ -14,7 +14,7 @@
 	</target>
 	<target name="clean">
 		<delete dir="bin" />
-		<delete file="distributor.jar" />
+		<delete file="dispatcher.jar" />
 		<delete file="server.jar" />
 		<delete file="shared.jar" />
 	</target>
@@ -25,7 +25,7 @@
 		</javac>
 	</target>
 	<target depends="build-class" name="build-jar">
-		<jar destfile="distributor.jar" basedir="bin" includes="ca/polymtl/INF4410/TP2/Distributor/**" update="false" />
+		<jar destfile="dispatcher.jar" basedir="bin" includes="ca/polymtl/INF4410/TP2/Dispatcher/**" update="false" />
 		<jar destfile="server.jar" basedir="bin" includes="ca/polymtl/INF4410/TP2/Server/**" update="false" />
 		<jar destfile="shared.jar" basedir="bin" includes="ca/polymtl/INF4410/TP2/Shared/**" update="false" />
 	</target>
