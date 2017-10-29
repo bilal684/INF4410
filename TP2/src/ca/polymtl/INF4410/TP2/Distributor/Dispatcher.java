@@ -15,7 +15,7 @@ import java.util.List;
 import ca.polymtl.INF4410.TP2.Shared.IServer;
 import ca.polymtl.INF4410.TP2.Shared.Pair;
 
-public class Distributor {
+public class Dispatcher {
 
 	private static List<Pair<String, Integer>> operations;
 	private static IServer serverStub = null;
