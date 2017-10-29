@@ -13,21 +13,42 @@ import ca.polymtl.INF4410.TP2.Shared.Pair;
 
 
 public class Server implements IServer{
-
 	/**
 	 * @param args
 	 */
 	
 	private Integer capacity;
+	private Integer failRate;
+	private Integer port;
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
-		Server server = new Server(Integer.parseInt(args[0]));
-		server.run();
+		Server server = null;
+		if(args.length == 2)
+		{
+			 server = new Server(Integer.parseInt(args[0]), Integer.parseInt(args[1]));
+			 server.run();
+		}
+		else if (args.length == 3)
+		{
+			server = new Server(Integer.parseInt(args[0]), Integer.parseInt(args[1]), Integer.parseInt(args[2]));
+			server.run();
+		}
+		else
+		{
+			throw new IllegalArgumentException("Server can either take one argument (capacity) or two arguments (capacity and fail rate).");
+		}
 	}
 	
-	public Server(Integer capacity)
+	public Server(Integer capacity, Integer port)
 	{
-		this.capacity = capacity;			
+		this(capacity, port, null);
+	}
+	
+	public Server(Integer capacity, Integer port,Integer failRate)
+	{
+		this.capacity = capacity;
+		this.port = port;
+		this.failRate = failRate;
 	}
 	
 	public void run()
@@ -38,8 +59,7 @@ public class Server implements IServer{
 
 		try {
 			IServer stub = (IServer) UnicastRemoteObject.exportObject(this, 0);
-
-			Registry registry = LocateRegistry.getRegistry();
+			Registry registry = LocateRegistry.getRegistry(port);
 			registry.rebind("server", stub);
 			System.out.println("Server ready.");
 		} catch (ConnectException e) {
@@ -78,7 +98,4 @@ public class Server implements IServer{
 	{
 		return (oldResult + operationValue) % 4000;
 	}
-	
-	
-
 }
