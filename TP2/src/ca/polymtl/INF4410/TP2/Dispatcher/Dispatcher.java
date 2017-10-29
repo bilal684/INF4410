@@ -44,25 +44,37 @@ public class Dispatcher {
 			}
 			Integer operationsIndex = 0;
 			Integer result = 0;
-			Object lock = new Object();
 			while(operationsIndex < operations.size())
 			{
+				//ThreadGroup tg = new ThreadGroup("Threads");
+				List<Thread> threads = new ArrayList<Thread>();
+				List<JobThread> jobs = new ArrayList<JobThread>();
 				for(int i = 0; i < serverStubs.size(); i++)
 				{
 					Integer increment = (Math.min(operations.size() - operationsIndex, operationsIndex + serverStubs.get(i).getCapacity()) >= 0) ? Math.min(operations.size() - operationsIndex, operationsIndex + serverStubs.get(i).getCapacity()) : 0;
 					List<Pair<String, Integer>> ls = new ArrayList<Pair<String, Integer>>(operations.subList(operationsIndex, operationsIndex + increment));
 					if(ls.size() > 0)
 					{
-						synchronized(lock)
-						{
-							result += serverStubs.get(i).processOperations(ls);
-						}
+						JobThread job = new JobThread(serverStubs.get(i), operationsIndex, operationsIndex + increment, ls);
+						jobs.add(job);
+						Thread th = new Thread(job);
+						threads.add(th);
+						th.start();
 					}
 					else
 					{
 						break;
 					}
 					operationsIndex += increment;
+				}
+				//tg.wait();
+				for(int i = 0; i < threads.size(); i++)
+				{
+					threads.get(i).join();
+				}
+				for(int i = 0; i < jobs.size(); i++)
+				{
+					result = (result + jobs.get(i).getResult()) % 4000;
 				}
 			}
 			System.out.println(result);
@@ -71,14 +83,6 @@ public class Dispatcher {
 		{
 			System.err.println(e.getMessage());
 		}
-		
-
-		
-		
-		//serverStub = loadServerStub(serverIpaddress);
-		//List<Pair<String, Integer>> ls = new ArrayList<Pair<String, Integer>>(operations.subList(0, serverStub.getCapacity()));
-		//Integer ret = serverStub.processOperations(ls);
-		//System.out.println(ret);
 	}
 	
 	private static IServer loadServerStub(String hostname, Integer port) {
@@ -124,6 +128,35 @@ public class Dispatcher {
 			}
 		}
 		return listOfOperations;
+	}
+	
+	
+	/*
+	 * 
+	 * 
+	 * 		Runtime.getRuntime().addShutdownHook(new Thread(new Runnable()
+		{
+
+			@Override
+			public void run() {
+				// TODO Auto-generated method stub
+				try {
+					saveLatestGeneratedId();
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		}));
+	 * 
+	 * 
+	 * 
+	 * */
+	
+	private Integer dispatchTask(Integer index)
+	{
+		
+		return null;
 	}
 
 }
