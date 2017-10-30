@@ -96,6 +96,7 @@ public class Config {
 					servers.add(new Pair<String, Integer>(res[1], Integer.parseInt(res[2])));
 				}
 			}
+			br.close();
 		}
 		finally
 		{

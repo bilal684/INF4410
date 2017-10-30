@@ -6,6 +6,7 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.List;
+import java.util.Random;
 
 import ca.polymtl.INF4410.TP2.Shared.IServer;
 import ca.polymtl.INF4410.TP2.Shared.Operations;
@@ -79,19 +80,37 @@ public class Server implements IServer{
 	
 	public Integer processOperations(List<Pair<String, Integer>> listOfOperations) throws RemoteException
 	{
-		Integer result = 0;
-		for(int i = 0; i < listOfOperations.size(); i++)
+		if(hasEnoughRessources(listOfOperations.size()))
 		{
-			if(listOfOperations.get(i).getKey().toLowerCase().equals("prime"))
+			Integer result = 0;
+			for(int i = 0; i < listOfOperations.size(); i++)
 			{
-				result = processSum(Operations.prime(listOfOperations.get(i).getValue()), result);
+				if(listOfOperations.get(i).getKey().toLowerCase().equals("prime"))
+				{
+					result = processSum(Operations.prime(listOfOperations.get(i).getValue()), result);
+				}
+				else if(listOfOperations.get(i).getKey().toLowerCase().equals("pell"))
+				{
+					result = processSum(Operations.pell(listOfOperations.get(i).getValue()), result);
+				}
 			}
-			else if(listOfOperations.get(i).getKey().toLowerCase().equals("pell"))
-			{
-				result = processSum(Operations.pell(listOfOperations.get(i).getValue()), result);
-			}
+			return result;
 		}
-		return result;
+		else
+		{
+			return -1;
+		}
+
+	}
+	
+	private boolean hasEnoughRessources(Integer operationsSize)
+	{
+		Integer refusalRate = (int) Math.round((((operationsSize.doubleValue() - capacity.doubleValue())/(5.0 * capacity.doubleValue())) * 100.0));
+		Random r = new Random();
+		int randomVal = r.nextInt(101);
+		//If randomVal is <= refusalRate -->  return false (not enough ressources). Else, return true.
+		//System.out.println(randomVal);
+		return (randomVal > refusalRate);
 	}
 	
 	private Integer processSum(Integer operationValue, Integer oldResult)
