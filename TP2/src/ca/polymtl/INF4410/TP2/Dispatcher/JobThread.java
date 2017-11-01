@@ -8,32 +8,34 @@ import ca.polymtl.INF4410.TP2.Shared.IServer;
 import ca.polymtl.INF4410.TP2.Shared.Pair;
 
 public class JobThread implements Runnable{
-	
+	private Integer jobId;
 	private Integer result;
 	private IServer serverStub;
 	private Integer operationIndexStart;
 	private Integer operationIndexEnd;
 	private volatile List<Pair<String, Integer>> operations;
-	private Semaphore sem;
 	
-	public JobThread(IServer serverStub, Integer operationIndexStart, Integer operationIndexEnd, List<Pair<String, Integer>> operations, Semaphore sem)
+	public JobThread(IServer serverStub, Integer operationIndexStart, Integer operationIndexEnd, List<Pair<String, Integer>> operations, Integer jobId)
 	{
 		this.serverStub = serverStub;
 		this.operationIndexStart = operationIndexStart;
 		this.operationIndexEnd = operationIndexEnd;
 		this.operations = operations;
 		this.result = 0;
-		this.sem = sem;
+		this.jobId = jobId;
 	}
 	
 	
-	public void run() {
+	public synchronized void run() {
 		// TODO Auto-generated method stub
 		try {
 			while(true)
 			{
-				sem.acquire();
+				Dispatcher.sems.get(jobId).getKey().acquire();
+				//sems.getKey().acquire(); //acquires semaphore to start proceeding.
 				result = serverStub.processOperations(operations);
+				//sems.getValue().release(); // notifies the dispatcher that it has done.
+				Dispatcher.sems.get(jobId).getValue().release();
 			}
 		} catch (RemoteException e) {
 			// TODO Auto-generated catch block
@@ -75,8 +77,8 @@ public class JobThread implements Runnable{
 	}
 
 
-	public Semaphore getSem() {
-		return sem;
-	}
+	/*public Pair<Semaphore, Semaphore> getSems() {
+		return sems;
+	}*/
 
 }

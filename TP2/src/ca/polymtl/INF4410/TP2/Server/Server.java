@@ -80,9 +80,10 @@ public class Server implements IServer{
 	
 	public Integer processOperations(List<Pair<String, Integer>> listOfOperations) throws RemoteException
 	{
+		System.out.println("Received request with size: " + listOfOperations.size());
+		Integer result = 0;
 		if(hasEnoughRessources(listOfOperations.size()))
 		{
-			Integer result = 0;
 			for(int i = 0; i < listOfOperations.size(); i++)
 			{
 				if(listOfOperations.get(i).getKey().toLowerCase().equals("prime"))
@@ -94,13 +95,13 @@ public class Server implements IServer{
 					result = processSum(Operations.pell(listOfOperations.get(i).getValue()), result);
 				}
 			}
-			return result;
 		}
 		else
 		{
-			return -1;
+			result = -1;
 		}
-
+		System.out.println("Result is : " + result);
+		return result;
 	}
 	
 	private boolean hasEnoughRessources(Integer operationsSize)
