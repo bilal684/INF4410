@@ -11,15 +11,11 @@ public class JobThread implements Runnable{
 	private Integer jobId;
 	private Integer result;
 	private IServer serverStub;
-	private Integer operationIndexStart;
-	private Integer operationIndexEnd;
 	private volatile List<Pair<String, Integer>> operations;
 	
 	public JobThread(IServer serverStub, Integer operationIndexStart, Integer operationIndexEnd, List<Pair<String, Integer>> operations, Integer jobId)
 	{
 		this.serverStub = serverStub;
-		this.operationIndexStart = operationIndexStart;
-		this.operationIndexEnd = operationIndexEnd;
 		this.operations = operations;
 		this.result = 0;
 		this.jobId = jobId;
@@ -31,11 +27,11 @@ public class JobThread implements Runnable{
 		try {
 			while(true)
 			{
-				Dispatcher.sems.get(jobId).getKey().acquire();
+				Dispatcher.sems.get(jobId).acquire();
 				//sems.getKey().acquire(); //acquires semaphore to start proceeding.
 				result = serverStub.processOperations(operations);
 				//sems.getValue().release(); // notifies the dispatcher that it has done.
-				Dispatcher.sems.get(jobId).getValue().release();
+				//Dispatcher.sems.get(jobId).getValue().release();
 			}
 		} catch (RemoteException e) {
 			// TODO Auto-generated catch block
@@ -55,17 +51,6 @@ public class JobThread implements Runnable{
 	public IServer getServerStub() {
 		return serverStub;
 	}
-
-
-	public Integer getOperationIndexStart() {
-		return operationIndexStart;
-	}
-
-
-	public Integer getOperationIndexEnd() {
-		return operationIndexEnd;
-	}
-
 
 	public List<Pair<String, Integer>> getOperations() {
 		return operations;
