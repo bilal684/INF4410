@@ -112,90 +112,6 @@ public class Dispatcher {
 	
 	private static Integer processCalculationSecured() throws InterruptedException, RemoteException
 	{
-		/*Integer operationsIndex = 0;
-		Integer result = 0;
-		boolean firstIterationDone = false;
-		List<Thread> threads = new ArrayList<Thread>();
-		List<JobThread> jobs = new ArrayList<JobThread>();
-		Integer threadsAlive = 0;
-		while(operationsIndex < operations.size() || threadsAlive > 0)
-		{
-			//System.out.println("en haut");
-			//For loop that starts the different threads.
-			//System.out.println("Server stubs amount : " + serverStubs.size());
-			System.out.println("Operations Index : " + operationsIndex);
-			System.out.println("Operations size : " + operations.size());
-			System.out.println("Threads alive : " + threadsAlive);
-			//loop qui cree les threads pour la premiere fois.
-			for(int i = 0; i < serverStubs.size() && !firstIterationDone; i++)
-			{
-				//System.out.println(i);
-				Integer optimalIncrement = (int) Math.round(((7.0/2.0) * serverStubs.get(i).getCapacity().doubleValue())); //optimal increment so it leaves a 50% chance of fail or success to optimize operation count.
-				System.out.println("optimalIncrement : " + optimalIncrement);
-				Integer increment = (Math.min(operations.size() - operationsIndex, optimalIncrement) >= 0) ? Math.min(operations.size() - operationsIndex, optimalIncrement) : 0;
-				System.out.println("Increment : " + increment);
-				System.out.println("Operations size - operationsIndex " + (operations.size() - operationsIndex));
-				System.out.println("Operations index + optimalIncrement" + (operationsIndex + optimalIncrement));
-				List<Pair<String, Integer>> operationsToDo = new ArrayList<Pair<String, Integer>>(operations.subList(operationsIndex, operationsIndex + increment));
-				if(operationsToDo.size() > 0)
-				{
-					JobThread job = new JobThread(serverStubs.get(i), operationsIndex, operationsIndex + increment, operationsToDo, i);
-					jobs.add(job);
-					Thread th = new Thread(job);
-					threads.add(th);
-					System.out.println("Threads size : " + threads.size());
-					th.start();
-					threadsAlive++;
-					operationsIndex = operationsIndex + increment;
-				}
-				else
-				{
-					break;
-				}
-			}
-			firstIterationDone = true;
-			for(int i = 0; i < threads.size(); i++)
-			{
-				System.out.println("Inside second for, hanging." + threads.size());
-				for(int j = 0; j < threads.size(); j++)
-				{
-					System.out.println(threads.get(j).getState());
-				}
-				if(threads.get(i).getState().equals(State.WAITING))
-				{
-					//Thread a terminer de rouler et contient des resultats.
-					if(jobs.get(i).getResult() != -1)
-					{
-						//on additionne les resultat dans le cas ou != -1
-						result = (result + jobs.get(i).getResult()) % 4000;
-					}
-					//result was equal to 1 so these operations must be redone.
-					else
-					{
-						//redo operations...
-						operations.addAll(jobs.get(i).getOperations());
-					}
-					System.out.println("Inside if");
-					//System.out.println("Inside thread holding lock bra.");
-					Integer optimalIncrement = (int) Math.round(((7.0/2.0) * jobs.get(i).getServerStub().getCapacity().doubleValue())); //optimal increment so it leaves a 50% chance of fail or success to optimize operation count.
-					System.out.println("Server capacity : " + jobs.get(i).getServerStub().getCapacity().doubleValue());
-					System.out.println("Optimal increment : " + optimalIncrement);
-					Integer increment = (Math.min(operations.size() - operationsIndex, optimalIncrement) >= 0) ? Math.min(operations.size() - operationsIndex, optimalIncrement) : 0;
-					System.out.println("Operations.sdize - operationsIndex = " + (operations.size() - operationsIndex));
-					System.out.println("Operations Index + optimalIncrement = " + (operationsIndex + optimalIncrement) );
-					
-					System.out.print("Increment : " + increment);
-					List<Pair<String, Integer>> operationsToDo = new ArrayList<Pair<String, Integer>>(operations.subList(operationsIndex, operationsIndex + increment));
-					System.out.println("Boundaries chosen : [" + operationsIndex + ", " + (operationsIndex + increment) + "]");
-					if(operationsToDo.size() > 0) // il y a encore de la job...
-					{
-						jobs.get(i).setOperations(operationsToDo);
-						operationsIndex = operationsIndex + increment;
-					}
-					//result was not equal to 1.
-				}
-			}
-		}*/
 		Integer operationsIndex = 0;
 		Integer result = 0;
 		List<Thread> threads = new ArrayList<Thread>();
@@ -209,13 +125,13 @@ public class Dispatcher {
 			{
 				//optimal increment so it leaves a 50% chance of fail or success to optimize operation count.
 				Integer optimalIncrement = (int) Math.round(((7.0/2.0) * serverStubs.get(i).getCapacity().doubleValue())); 
-				Integer minBetweenOptimalIncrementAndItemsLeftCount = Math.min(operations.size() - 1 - operationsIndex, optimalIncrement);
+				Integer minBetweenOptimalIncrementAndItemsLeftCount = Math.min(operations.size() - operationsIndex, optimalIncrement);
 				Integer increment = (minBetweenOptimalIncrementAndItemsLeftCount >= 0) ? minBetweenOptimalIncrementAndItemsLeftCount : 0; // protection malgre la condition du while.
 				List<Pair<String, Integer>> operationsToDo = new ArrayList<Pair<String, Integer>>(operations.subList(operationsIndex, operationsIndex + increment));
-				System.out.println("OperationsToDoInsideFirstForLoop : " + operationsToDo.size());
+				//System.out.println("OperationsToDoInsideFirstForLoop : " + operationsToDo.size());
 				/*if(operationsToDo.size() > 0)//si ya des operations a faire...
 				{*/
-				JobThread job = new JobThread(serverStubs.get(i), operationsIndex, operationsIndex + increment, operationsToDo, i);
+				JobThread job = new JobThread(serverStubs.get(i), operationsToDo, i);
 				jobs.add(job);
 				Thread th = new Thread(job);
 				threads.add(th);
@@ -226,29 +142,35 @@ public class Dispatcher {
 			firstIterationIsDone = true; //on veut plus creer de threads car ils sont deja en marche.
 			for(int i = 0; i < threads.size(); i++)
 			{
+				System.out.println(threads.get(i).getState());
 				if(threads.get(i).getState().equals(State.WAITING))//si le thread est en train d'attendre (pend sur un semaphore)
 				{
+					System.out.println("*****************Inside if*****************");
 					if(jobs.get(i).getResult().equals(-1))
 					{
 						operations.addAll(jobs.get(i).getOperations());//on popule operations avec la liste des operations que le thread devait faire...
 						//c'est operations seront a refaire.
-						//jobs.get(i).getOperations().clear();//je clear ce que je vien de rajouter au niveau de la job. //protection.
+						jobs.get(i).getOperations().clear();//je clear ce que je vien de rajouter au niveau de la job. //protection.
+						jobs.get(i).setResult(0);
 					}
 					else //il y a un resultat.
 					{
 						result = (result + jobs.get(i).getResult()) % 4000;
+						jobs.get(i).setResult(0);
 					}
 					Integer optimalIncrement = (int) Math.round(((7.0/2.0) * serverStubs.get(i).getCapacity().doubleValue())); 
-					Integer minBetweenOptimalIncrementAndItemsLeftCount = Math.min(operations.size() - 1 - operationsIndex, optimalIncrement);
+					Integer minBetweenOptimalIncrementAndItemsLeftCount = Math.min(operations.size() - operationsIndex, optimalIncrement);
 					Integer increment = (minBetweenOptimalIncrementAndItemsLeftCount >= 0) ? minBetweenOptimalIncrementAndItemsLeftCount : 0; // protection malgre la condition du while.
 					List<Pair<String, Integer>> operationsToDo = new ArrayList<Pair<String, Integer>>(operations.subList(operationsIndex, operationsIndex + increment));
-					System.out.println("OperationsToDoInsideSecondForLoop : " + operationsToDo.size());
+					//System.out.println("OperationsToDoInsideSecondForLoop : " + operationsToDo.size());
 					jobs.get(i).setOperations(operationsToDo);
 					operationsIndex += increment;
-					sems.get(i).release();
+					sems.get(jobs.get(i).getJobId()).release();
 				}
 			}
 		}
+		System.out.println("Operations index : " + operationsIndex);
+		System.out.println("Operations size : " + operations.size());
 		for(int i = 0; i < threads.size(); i++)
 		{
 			threads.get(i).interrupt();

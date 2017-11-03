@@ -13,7 +13,7 @@ public class JobThread implements Runnable{
 	private IServer serverStub;
 	private volatile List<Pair<String, Integer>> operations;
 	
-	public JobThread(IServer serverStub, Integer operationIndexStart, Integer operationIndexEnd, List<Pair<String, Integer>> operations, Integer jobId)
+	public JobThread(IServer serverStub, List<Pair<String, Integer>> operations, Integer jobId)
 	{
 		this.serverStub = serverStub;
 		this.operations = operations;
@@ -62,8 +62,13 @@ public class JobThread implements Runnable{
 	}
 
 
-	/*public Pair<Semaphore, Semaphore> getSems() {
-		return sems;
-	}*/
+	public void setResult(Integer result) {
+		this.result = result;
+	}
+
+
+	public Integer getJobId() {
+		return jobId;
+	}
 
 }
