@@ -9,7 +9,7 @@ import ca.polymtl.INF4410.TP2.Shared.Pair;
 
 public class JobThread implements Runnable{
 	private Integer jobId;
-	private Integer result;
+	private volatile Integer result;
 	private IServer serverStub;
 	private volatile List<Pair<String, Integer>> operations;
 	

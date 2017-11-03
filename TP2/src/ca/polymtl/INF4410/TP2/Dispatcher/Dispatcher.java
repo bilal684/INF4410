@@ -142,10 +142,8 @@ public class Dispatcher {
 			firstIterationIsDone = true; //on veut plus creer de threads car ils sont deja en marche.
 			for(int i = 0; i < threads.size(); i++)
 			{
-				System.out.println(threads.get(i).getState());
 				if(threads.get(i).getState().equals(State.WAITING))//si le thread est en train d'attendre (pend sur un semaphore)
 				{
-					System.out.println("*****************Inside if*****************");
 					if(jobs.get(i).getResult().equals(-1))
 					{
 						operations.addAll(jobs.get(i).getOperations());//on popule operations avec la liste des operations que le thread devait faire...
@@ -155,6 +153,8 @@ public class Dispatcher {
 					}
 					else //il y a un resultat.
 					{
+						System.out.println("Current job : " + jobs.get(i).getJobId() + "Current i : " + i);
+						System.out.println("Result : " + jobs.get(i).getResult());
 						result = (result + jobs.get(i).getResult()) % 4000;
 						jobs.get(i).setResult(0);
 					}
