@@ -27,9 +27,10 @@ public class JobThread implements Runnable{
 		try {
 			while(true)
 			{
-				Dispatcher.sems.get(jobId).acquire();
+				Dispatcher.sems.get(jobId).getKey().acquire();
 				//sems.getKey().acquire(); //acquires semaphore to start proceeding.
 				result = serverStub.processOperations(operations);
+				Dispatcher.sems.get(jobId).getValue().release();
 				//sems.getValue().release(); // notifies the dispatcher that it has done.
 				//Dispatcher.sems.get(jobId).getValue().release();
 			}

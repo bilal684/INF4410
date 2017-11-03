@@ -21,7 +21,7 @@ public class Dispatcher {
 
 	private static List<Pair<String, Integer>> operations;
 	private static List<IServer> serverStubs = null;
-	public static List<Semaphore> sems = null;
+	public static List<Pair<Semaphore,Semaphore>> sems = null;
 	/**
 	 * @param args
 	 * @throws IOException 
@@ -71,13 +71,13 @@ public class Dispatcher {
 	private static void populateServerStubs(Config conf)
 	{
 		serverStubs = new ArrayList<IServer>();
-		sems = new ArrayList<Semaphore>();
+		sems = new ArrayList<Pair<Semaphore, Semaphore>>();
 		for(int i = 0; i < conf.getServers().size(); i++)
 		{
 			serverStubs.add(i, loadServerStub(conf.getServers().get(i).getKey(), conf.getServers().get(i).getValue()));
 			//Key : Semaphore from dispatcher to thread
 			//Value : Semaphore from thread to dispatcher
-			sems.add(new Semaphore(1));
+			sems.add(new Pair<Semaphore, Semaphore>(new Semaphore(1), new Semaphore(0)));
 		}
 	}
 	
@@ -117,7 +117,8 @@ public class Dispatcher {
 		List<Thread> threads = new ArrayList<Thread>();
 		List<JobThread> jobs = new ArrayList<JobThread>();
 		boolean firstIterationIsDone = false;
-		while(operationsIndex < operations.size()) //tant que l'index de ou on est rendu est inferieur a la taille de la liste des operations.
+		Integer threadsAlive = 0;
+		while(operationsIndex < operations.size() || threadsAlive > 0) //tant que l'index de ou on est rendu est inferieur a la taille de la liste des operations.
 		{
 			
 			//pour chaque serveur.
@@ -136,13 +137,15 @@ public class Dispatcher {
 				Thread th = new Thread(job);
 				threads.add(th);
 				th.start();
+				threadsAlive++;
 				operationsIndex += increment; // increment operations index.
 				//}
 			}
 			firstIterationIsDone = true; //on veut plus creer de threads car ils sont deja en marche.
 			for(int i = 0; i < threads.size(); i++)
 			{
-				if(threads.get(i).getState().equals(State.WAITING))//si le thread est en train d'attendre (pend sur un semaphore)
+				//if(threads.get(i).getState().equals(State.WAITING))//si le thread est en train d'attendre (pend sur un semaphore)
+				if(sems.get(i).getValue().tryAcquire())
 				{
 					if(jobs.get(i).getResult().equals(-1))
 					{
@@ -165,16 +168,32 @@ public class Dispatcher {
 					//System.out.println("OperationsToDoInsideSecondForLoop : " + operationsToDo.size());
 					jobs.get(i).setOperations(operationsToDo);
 					operationsIndex += increment;
-					sems.get(jobs.get(i).getJobId()).release();
+					sems.get(jobs.get(i).getJobId()).getKey().release();
 				}
+			}
+			//A reverifier. Le bug est ici.
+			if(operationsIndex.equals(operations.size()) && threadsAlive > 0)
+			{
+				boolean notAllThreadWaiting = false;
+				for(int i = 0; i < threads.size(); i++)
+				{
+					if(!threads.get(i).getState().equals(State.WAITING))
+					{
+						notAllThreadWaiting = true;
+					}
+				}
+				if(!notAllThreadWaiting)
+				{
+					for(int i = 0; i < threads.size(); i++)
+					{
+						threads.get(i).interrupt();
+						threadsAlive--;
+					}
+				}	
 			}
 		}
 		System.out.println("Operations index : " + operationsIndex);
 		System.out.println("Operations size : " + operations.size());
-		for(int i = 0; i < threads.size(); i++)
-		{
-			threads.get(i).interrupt();
-		}
 		return result;
 	}
 }
