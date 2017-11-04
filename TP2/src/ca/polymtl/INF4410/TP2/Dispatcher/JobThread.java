@@ -2,14 +2,13 @@ package ca.polymtl.INF4410.TP2.Dispatcher;
 
 import java.rmi.RemoteException;
 import java.util.List;
-import java.util.concurrent.Semaphore;
 
 import ca.polymtl.INF4410.TP2.Shared.IServer;
 import ca.polymtl.INF4410.TP2.Shared.Pair;
 
 public class JobThread implements Runnable{
 	private Integer jobId;
-	private volatile Integer result;
+	private Integer result;
 	private IServer serverStub;
 	private volatile List<Pair<String, Integer>> operations;
 	
@@ -28,11 +27,8 @@ public class JobThread implements Runnable{
 			while(true)
 			{
 				Dispatcher.sems.get(jobId).getKey().acquire();
-				//sems.getKey().acquire(); //acquires semaphore to start proceeding.
 				result = serverStub.processOperations(operations);
 				Dispatcher.sems.get(jobId).getValue().release();
-				//sems.getValue().release(); // notifies the dispatcher that it has done.
-				//Dispatcher.sems.get(jobId).getValue().release();
 			}
 		} catch (RemoteException e) {
 			// TODO Auto-generated catch block

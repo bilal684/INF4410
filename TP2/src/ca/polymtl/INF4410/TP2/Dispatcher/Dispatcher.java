@@ -22,6 +22,7 @@ public class Dispatcher {
 	private static List<Pair<String, Integer>> operations;
 	private static List<IServer> serverStubs = null;
 	public static List<Pair<Semaphore,Semaphore>> sems = null;
+
 	/**
 	 * @param args
 	 * @throws IOException 
@@ -39,10 +40,10 @@ public class Dispatcher {
 			{
 				//TODO printUsage function....
 			}
-			populateServerStubs(conf);
+			setupDispatcher(conf);
 			if(conf.getIsSecured())
 			{
-				System.out.println(processCalculationSecured());
+				System.out.println("Final result : " + processCalculationSecured());
 			}
 		}
 		catch(Exception e)
@@ -68,7 +69,7 @@ public class Dispatcher {
 		return stub;
 	}
 	
-	private static void populateServerStubs(Config conf)
+	private static void setupDispatcher(Config conf)
 	{
 		serverStubs = new ArrayList<IServer>();
 		sems = new ArrayList<Pair<Semaphore, Semaphore>>();
@@ -110,7 +111,7 @@ public class Dispatcher {
 		return listOfOperations;
 	}
 	
-	private static Integer processCalculationSecured() throws InterruptedException, RemoteException
+	private synchronized static Integer processCalculationSecured() throws InterruptedException, RemoteException
 	{
 		Integer operationsIndex = 0;
 		Integer result = 0;
@@ -120,7 +121,15 @@ public class Dispatcher {
 		Integer threadsAlive = 0;
 		while(operationsIndex < operations.size() || threadsAlive > 0) //tant que l'index de ou on est rendu est inferieur a la taille de la liste des operations.
 		{
-			
+			//A reverifier. Le bug est ici.
+			if(operationsIndex.equals(operations.size()) && threadsAlive > 0 && threads.stream().allMatch(i -> i.getState().equals(State.WAITING) && jobs.stream().allMatch(j -> j.getResult().equals(0))))
+			{
+				for(int i = 0; i < threads.size(); i++)
+				{
+					threads.get(i).interrupt();
+					threadsAlive--;
+				}
+			}
 			//pour chaque serveur.
 			for(int i = 0; i < serverStubs.size() && !firstIterationIsDone; i++)
 			{
@@ -129,22 +138,21 @@ public class Dispatcher {
 				Integer minBetweenOptimalIncrementAndItemsLeftCount = Math.min(operations.size() - operationsIndex, optimalIncrement);
 				Integer increment = (minBetweenOptimalIncrementAndItemsLeftCount >= 0) ? minBetweenOptimalIncrementAndItemsLeftCount : 0; // protection malgre la condition du while.
 				List<Pair<String, Integer>> operationsToDo = new ArrayList<Pair<String, Integer>>(operations.subList(operationsIndex, operationsIndex + increment));
-				//System.out.println("OperationsToDoInsideFirstForLoop : " + operationsToDo.size());
-				/*if(operationsToDo.size() > 0)//si ya des operations a faire...
-				{*/
-				JobThread job = new JobThread(serverStubs.get(i), operationsToDo, i);
-				jobs.add(job);
-				Thread th = new Thread(job);
-				threads.add(th);
-				th.start();
-				threadsAlive++;
-				operationsIndex += increment; // increment operations index.
-				//}
+				if(operationsToDo.size() > 0)
+				{
+					JobThread job = new JobThread(serverStubs.get(i), operationsToDo, i);
+					jobs.add(job);
+					Thread th = new Thread(job);
+					th.setPriority(Thread.MAX_PRIORITY);
+					threads.add(th);
+					th.start();
+					threadsAlive++;
+					operationsIndex += increment; // increment operations index.
+				}
 			}
 			firstIterationIsDone = true; //on veut plus creer de threads car ils sont deja en marche.
 			for(int i = 0; i < threads.size(); i++)
 			{
-				//if(threads.get(i).getState().equals(State.WAITING))//si le thread est en train d'attendre (pend sur un semaphore)
 				if(sems.get(i).getValue().tryAcquire())
 				{
 					if(jobs.get(i).getResult().equals(-1))
@@ -152,12 +160,10 @@ public class Dispatcher {
 						operations.addAll(jobs.get(i).getOperations());//on popule operations avec la liste des operations que le thread devait faire...
 						//c'est operations seront a refaire.
 						jobs.get(i).getOperations().clear();//je clear ce que je vien de rajouter au niveau de la job. //protection.
-						jobs.get(i).setResult(0);
 					}
 					else //il y a un resultat.
 					{
-						System.out.println("Current job : " + jobs.get(i).getJobId() + "Current i : " + i);
-						System.out.println("Result : " + jobs.get(i).getResult());
+						System.out.println("Received result : " + jobs.get(i).getResult());
 						result = (result + jobs.get(i).getResult()) % 4000;
 						jobs.get(i).setResult(0);
 					}
@@ -165,35 +171,15 @@ public class Dispatcher {
 					Integer minBetweenOptimalIncrementAndItemsLeftCount = Math.min(operations.size() - operationsIndex, optimalIncrement);
 					Integer increment = (minBetweenOptimalIncrementAndItemsLeftCount >= 0) ? minBetweenOptimalIncrementAndItemsLeftCount : 0; // protection malgre la condition du while.
 					List<Pair<String, Integer>> operationsToDo = new ArrayList<Pair<String, Integer>>(operations.subList(operationsIndex, operationsIndex + increment));
-					//System.out.println("OperationsToDoInsideSecondForLoop : " + operationsToDo.size());
-					jobs.get(i).setOperations(operationsToDo);
-					operationsIndex += increment;
-					sems.get(jobs.get(i).getJobId()).getKey().release();
-				}
-			}
-			//A reverifier. Le bug est ici.
-			if(operationsIndex.equals(operations.size()) && threadsAlive > 0)
-			{
-				boolean notAllThreadWaiting = false;
-				for(int i = 0; i < threads.size(); i++)
-				{
-					if(!threads.get(i).getState().equals(State.WAITING))
+					if(operationsToDo.size() > 0)
 					{
-						notAllThreadWaiting = true;
+						jobs.get(i).setOperations(operationsToDo);
+						operationsIndex += increment;
+						sems.get(jobs.get(i).getJobId()).getKey().release();
 					}
 				}
-				if(!notAllThreadWaiting)
-				{
-					for(int i = 0; i < threads.size(); i++)
-					{
-						threads.get(i).interrupt();
-						threadsAlive--;
-					}
-				}	
 			}
 		}
-		System.out.println("Operations index : " + operationsIndex);
-		System.out.println("Operations size : " + operations.size());
 		return result;
 	}
 }

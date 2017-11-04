@@ -110,7 +110,6 @@ public class Server implements IServer{
 		Random r = new Random();
 		int randomVal = r.nextInt(101);
 		//If randomVal is <= refusalRate -->  return false (not enough ressources). Else, return true.
-		//System.out.println(randomVal);
 		return (randomVal > refusalRate);
 	}
 	
