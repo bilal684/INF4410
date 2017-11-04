@@ -1,6 +1,5 @@
 package ca.polymtl.INF4410.TP2.Dispatcher;
 
-import java.rmi.ConnectException;
 import java.rmi.RemoteException;
 import java.util.List;
 
@@ -22,9 +21,6 @@ public class JobThreadUnsecure implements Runnable {
 		// TODO Auto-generated method stub
 		try {
 			result = serverStub.getValue().processOperations(operations);
-		} catch (ConnectException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
 		} catch (RemoteException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
