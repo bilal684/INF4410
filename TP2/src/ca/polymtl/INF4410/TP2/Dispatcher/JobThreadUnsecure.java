@@ -8,7 +8,7 @@ import ca.polymtl.INF4410.TP2.Shared.Pair;
 
 public class JobThreadUnsecure implements Runnable {
 
-	private Integer result;
+	private Integer result = 0;
 	private Pair<String, IServer> serverStub;
 	private List<Pair<String, Integer>> operations;
 
@@ -21,9 +21,8 @@ public class JobThreadUnsecure implements Runnable {
 		// TODO Auto-generated method stub
 		try {
 			result = serverStub.getValue().processOperations(operations);
-		} catch (RemoteException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		} catch (Exception e) {
+			return;
 		}
 	}
 

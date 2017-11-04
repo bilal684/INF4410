@@ -28,11 +28,9 @@ public class JobThreadSecure implements Runnable {
 				result = serverStub.getValue().processOperations(operations);
 				Dispatcher.sems.get(jobId).getValue().release();
 			}
-		} catch (RemoteException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
+		}
+		catch(Exception e)
+		{
 			return;
 		}
 	}

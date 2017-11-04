@@ -15,6 +15,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 
 import ca.polymtl.INF4410.TP2.Dispatcher.JobThreadSecure;
 import ca.polymtl.INF4410.TP2.Shared.IServer;
@@ -25,6 +26,8 @@ public class Dispatcher {
 	private static List<Pair<String, Integer>> operations;
 	public static List<Pair<String, IServer>> serverStubs = null;
 	public static List<Pair<Semaphore, Semaphore>> sems = null;
+	private static List<Integer> semaphoreAttempts = null;
+	private static Set<Integer> indexToSkip = null;
 
 	/**
 	 * @param args
@@ -70,6 +73,8 @@ public class Dispatcher {
 	private static void setupDispatcher(Config conf) {
 		serverStubs = new ArrayList<Pair<String, IServer>>();
 		sems = new ArrayList<Pair<Semaphore, Semaphore>>();
+		semaphoreAttempts = new ArrayList<Integer>();
+		indexToSkip = new HashSet<Integer>();
 		for (int i = 0; i < conf.getServers().size(); i++) {
 
 			serverStubs.add(loadServerStub(conf.getServers().get(i).getKey(), conf.getServers().get(i).getValue()));
@@ -102,7 +107,7 @@ public class Dispatcher {
 		return listOfOperations;
 	}
 
-	private static Integer processCalculationSecured() throws RemoteException {
+	private static Integer processCalculationSecured() throws RemoteException, InterruptedException {
 		Integer operationsIndex = 0;
 		Integer result = 0;
 		List<Thread> threads = new ArrayList<Thread>();
@@ -113,12 +118,14 @@ public class Dispatcher {
 																		// inferieur a la taille de la liste des
 																		// operations.
 		{
-			// A reverifier. Le bug est ici.
-			if (operationsIndex.equals(operations.size()) && threadsAlive > 0 && threads.stream().allMatch(
-					i -> i.getState().equals(State.WAITING) && jobs.stream().allMatch(j -> j.getResult().equals(0)))) {
+			if (operationsIndex.equals(operations.size()) && threadsAlive > 0 && threads.stream().anyMatch(
+					i -> ( i != null && i.getState().equals(State.WAITING))) && jobs.stream().allMatch(j -> j.getResult().equals(0))) {
 				for (int i = 0; i < threads.size(); i++) {
-					threads.get(i).interrupt();
-					threadsAlive--;
+					if(threads.get(i) != null)
+					{
+						threads.get(i).interrupt();
+						threadsAlive--;
+					}
 				}
 			}
 			// pour chaque serveur.
@@ -143,36 +150,62 @@ public class Dispatcher {
 					th.start();
 					threadsAlive++;
 					operationsIndex += increment; // increment operations index.
+					semaphoreAttempts.add(0);
 				}
 			}
 			firstIterationIsDone = true; // on veut plus creer de threads car ils sont deja en marche.
 			for (int i = 0; i < threads.size(); i++) {
-				if (sems.get(i).getValue().tryAcquire()) {
-					if (jobs.get(i).getResult().equals(-1)) {
-						operations.addAll(jobs.get(i).getOperations());// on popule operations avec la liste des
-																		// operations que le thread devait faire...
-						// c'est operations seront a refaire.
-						jobs.get(i).getOperations().clear();// je clear ce que je vien de rajouter au niveau de la job.
-															// //protection.
-					} else // il y a un resultat.
-					{
-						System.out.println("Received result : " + jobs.get(i).getResult());
-						result = (result + jobs.get(i).getResult()) % 4000;
-						jobs.get(i).setResult(0);
+				if(indexToSkip.contains(i))
+				{
+					continue;
+				}
+				else
+				{
+					if (sems.get(i).getValue().tryAcquire(1, 100, TimeUnit.MILLISECONDS)) {
+						semaphoreAttempts.set(i, 0);
+						if (jobs.get(i).getResult().equals(-1)) {
+							operations.addAll(jobs.get(i).getOperations());// on popule operations avec la liste des
+																			// operations que le thread devait faire...
+							// c'est operations seront a refaire.
+							jobs.get(i).getOperations().clear();// je clear ce que je vien de rajouter au niveau de la job.
+																// //protection.
+						} else // il y a un resultat.
+						{
+							System.out.println("Received result : " + jobs.get(i).getResult());
+							result = (result + jobs.get(i).getResult()) % 4000;
+							jobs.get(i).setResult(0);
+						}
+						Integer optimalIncrement = (int) Math
+								.round(((7.0 / 2.0) * serverStubs.get(i).getValue().getCapacity().doubleValue()));
+						Integer minBetweenOptimalIncrementAndItemsLeftCount = Math.min(operations.size() - operationsIndex,
+								optimalIncrement);
+						Integer increment = (minBetweenOptimalIncrementAndItemsLeftCount >= 0)
+								? minBetweenOptimalIncrementAndItemsLeftCount
+								: 0; // protection malgre la condition du while.
+						List<Pair<String, Integer>> operationsToDo = new ArrayList<Pair<String, Integer>>(
+								operations.subList(operationsIndex, operationsIndex + increment));
+						if (operationsToDo.size() > 0) {
+							jobs.get(i).setOperations(operationsToDo);
+							operationsIndex += increment;
+							sems.get(jobs.get(i).getJobId()).getKey().release();
+						}
 					}
-					Integer optimalIncrement = (int) Math
-							.round(((7.0 / 2.0) * serverStubs.get(i).getValue().getCapacity().doubleValue()));
-					Integer minBetweenOptimalIncrementAndItemsLeftCount = Math.min(operations.size() - operationsIndex,
-							optimalIncrement);
-					Integer increment = (minBetweenOptimalIncrementAndItemsLeftCount >= 0)
-							? minBetweenOptimalIncrementAndItemsLeftCount
-							: 0; // protection malgre la condition du while.
-					List<Pair<String, Integer>> operationsToDo = new ArrayList<Pair<String, Integer>>(
-							operations.subList(operationsIndex, operationsIndex + increment));
-					if (operationsToDo.size() > 0) {
-						jobs.get(i).setOperations(operationsToDo);
-						operationsIndex += increment;
-						sems.get(jobs.get(i).getJobId()).getKey().release();
+					else
+					{
+						if(semaphoreAttempts.get(i) >= 20)
+						{
+							System.out.println("Inside if semaphoreAttemps > 20");
+							indexToSkip.add(i);
+							jobs.get(i).setResult(0);
+							operations.addAll(jobs.get(i).getOperations());
+							jobs.get(i).getOperations().clear();
+							threads.set(i, null);
+							threadsAlive--;
+						}
+						else
+						{
+							semaphoreAttempts.set(i, (semaphoreAttempts.get(i) + 1));
+						}
 					}
 				}
 			}
@@ -207,7 +240,10 @@ public class Dispatcher {
 			}
 			threads.stream().forEachOrdered(i -> {
 				try {
-					i.join();
+					if(i != null)
+					{
+						i.join();
+					}
 				} catch (InterruptedException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
