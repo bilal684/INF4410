@@ -1,6 +1,5 @@
 package ca.polymtl.INF4410.TP2.Dispatcher;
 
-import java.rmi.RemoteException;
 import java.util.List;
 
 import ca.polymtl.INF4410.TP2.Shared.IServer;

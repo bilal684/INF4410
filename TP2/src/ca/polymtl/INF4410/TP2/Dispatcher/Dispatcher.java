@@ -194,7 +194,6 @@ public class Dispatcher {
 					{
 						if(semaphoreAttempts.get(i) >= 20)
 						{
-							System.out.println("Inside if semaphoreAttemps > 20");
 							indexToSkip.add(i);
 							jobs.get(i).setResult(0);
 							operations.addAll(jobs.get(i).getOperations());
