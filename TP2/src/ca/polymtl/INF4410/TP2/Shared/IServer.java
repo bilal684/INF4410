@@ -4,9 +4,10 @@ import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.util.List;
 
-public interface IServer extends Remote{
-	
+public interface IServer extends Remote {
+
 	public Integer getCapacity() throws RemoteException;
+
 	public Integer processOperations(List<Pair<String, Integer>> listOfOperations) throws RemoteException;
 
 }

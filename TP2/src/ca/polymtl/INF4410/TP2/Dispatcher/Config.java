@@ -37,39 +37,6 @@ public class Config {
 		parseConfig();
 	}
 	
-	
-	/*
-	 * 	private static List<Pair<String, Integer>> readOperations(String filePath) throws IOException
-	{
-		File file;
-		FileReader fileReader = null;
-		List<Pair<String, Integer>> listOfOperations;
-		try
-		{
-			file = new File(filePath);
-			fileReader = new FileReader(file);
-			listOfOperations = new ArrayList<Pair<String, Integer>>();
-			BufferedReader br = new BufferedReader(fileReader);
-			String line;
-			while((line = br.readLine()) != null)
-			{
-				String[] vals = line.split("\\s+");
-				listOfOperations.add(new Pair<String, Integer>(vals[0], Integer.parseInt(vals[1])));
-			}
-		}
-		finally
-		{
-			if(fileReader != null)
-			{
-				fileReader.close();
-			}
-		}
-		return listOfOperations;
-	}
-	 * 
-	 * 
-	 */
-	
 	private void parseConfig() throws IOException
 	{
 		File configFile;
