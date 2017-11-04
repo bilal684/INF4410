@@ -103,7 +103,7 @@ public class Dispatcher {
 		Integer operationsIndex = 0;
 		Integer result = 0;
 		List<Thread> threads = new ArrayList<Thread>();
-		List<JobThread> jobs = new ArrayList<JobThread>();
+		List<JobThreadSecure> jobs = new ArrayList<JobThreadSecure>();
 		boolean firstIterationIsDone = false;
 		Integer threadsAlive = 0;
 		while (operationsIndex < operations.size() || threadsAlive > 0) // tant que l'index de ou on est rendu est
@@ -132,7 +132,7 @@ public class Dispatcher {
 				List<Pair<String, Integer>> operationsToDo = new ArrayList<Pair<String, Integer>>(
 						operations.subList(operationsIndex, operationsIndex + increment));
 				if (operationsToDo.size() > 0) {
-					JobThread job = new JobThread(serverStubs.get(i), operationsToDo, i);
+					JobThreadSecure job = new JobThreadSecure(serverStubs.get(i), operationsToDo, i);
 					jobs.add(job);
 					Thread th = new Thread(job);
 					th.setPriority(Thread.MAX_PRIORITY);

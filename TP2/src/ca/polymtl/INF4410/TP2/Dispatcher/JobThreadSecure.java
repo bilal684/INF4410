@@ -7,13 +7,13 @@ import java.util.List;
 import ca.polymtl.INF4410.TP2.Shared.IServer;
 import ca.polymtl.INF4410.TP2.Shared.Pair;
 
-public class JobThread implements Runnable {
+public class JobThreadSecure implements Runnable {
 	private Integer jobId;
 	private Integer result;
 	private Pair<String, IServer> serverStub;
 	private volatile List<Pair<String, Integer>> operations;
 
-	public JobThread(Pair<String, IServer> serverStub, List<Pair<String, Integer>> operations, Integer jobId) {
+	public JobThreadSecure(Pair<String, IServer> serverStub, List<Pair<String, Integer>> operations, Integer jobId) {
 		this.serverStub = serverStub;
 		this.operations = operations;
 		this.result = 0;
