@@ -1,5 +1,6 @@
 package ca.polymtl.INF4410.TP2.Dispatcher;
 
+import java.rmi.ConnectException;
 import java.rmi.RemoteException;
 import java.rmi.UnmarshalException;
 import java.util.List;
@@ -28,7 +29,12 @@ public class JobThreadSecure implements Runnable {
 				result = serverStub.getValue().processOperations(operations);
 				Dispatcher.sems.get(jobId).getValue().release();
 			}
-		} catch (UnmarshalException e) {
+		} catch (ConnectException e) {
+			result = 0;
+			for(int i = 0; i < Dispatcher.serverStubs.size(); i++)
+			{
+				
+			}
 
 		} catch (RemoteException e) {
 			// TODO Auto-generated catch block
