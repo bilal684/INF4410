@@ -29,6 +29,7 @@ public class JobThreadSecure implements Runnable {
 		}
 		catch(Exception e)
 		{
+			result = 0;
 			return;
 		}
 	}

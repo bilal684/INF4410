@@ -24,10 +24,12 @@ import ca.polymtl.INF4410.TP2.Shared.Pair;
 public class Dispatcher {
 
 	private static List<Pair<String, Integer>> operations;
+	private static List<Integer> allServerCapacity;
 	public static List<Pair<String, IServer>> serverStubs = null;
 	public static List<Pair<Semaphore, Semaphore>> sems = null;
 	private static List<Integer> semaphoreAttempts = null;
 	private static Set<Integer> indexToSkip = null;
+	private static Integer unsecureServerCapacity = -1;
 
 	/**
 	 * @param args
@@ -75,6 +77,7 @@ public class Dispatcher {
 		sems = new ArrayList<Pair<Semaphore, Semaphore>>();
 		semaphoreAttempts = new ArrayList<Integer>();
 		indexToSkip = new HashSet<Integer>();
+		allServerCapacity = new ArrayList<Integer>();
 		for (int i = 0; i < conf.getServers().size(); i++) {
 
 			serverStubs.add(loadServerStub(conf.getServers().get(i).getKey(), conf.getServers().get(i).getValue()));
@@ -132,8 +135,9 @@ public class Dispatcher {
 			for (int i = 0; i < serverStubs.size() && !firstIterationIsDone; i++) {
 				// optimal increment so it leaves a 50% chance of fail or success to optimize
 				// operation count.
+				allServerCapacity.add(serverStubs.get(i).getValue().getCapacity());
 				Integer optimalIncrement = (int) Math
-						.round(((7.0 / 2.0) * serverStubs.get(i).getValue().getCapacity().doubleValue()));
+						.round(((7.0 / 2.0) * allServerCapacity.get(i).doubleValue()));
 				Integer minBetweenOptimalIncrementAndItemsLeftCount = Math.min(operations.size() - operationsIndex,
 						optimalIncrement);
 				Integer increment = (minBetweenOptimalIncrementAndItemsLeftCount >= 0)
@@ -176,7 +180,7 @@ public class Dispatcher {
 							jobs.get(i).setResult(0);
 						}
 						Integer optimalIncrement = (int) Math
-								.round(((7.0 / 2.0) * serverStubs.get(i).getValue().getCapacity().doubleValue()));
+								.round(((7.0 / 2.0) * allServerCapacity.get(i).doubleValue()));
 						Integer minBetweenOptimalIncrementAndItemsLeftCount = Math.min(operations.size() - operationsIndex,
 								optimalIncrement);
 						Integer increment = (minBetweenOptimalIncrementAndItemsLeftCount >= 0)
@@ -217,10 +221,14 @@ public class Dispatcher {
 		Integer result = 0;
 		while (operationsIndex < operations.size())
 		{
+			if(unsecureServerCapacity == -1)
+			{
+				unsecureServerCapacity = serverStubs.get(0).getValue().getCapacity(); //since all server have the same capacity.
+			}
 			List<Thread> threads = new ArrayList<Thread>();
 			List<JobThreadUnsecure> jobs = new ArrayList<JobThreadUnsecure>();
 			Integer optimalIncrement = (int) Math
-					.round(((7.0 / 2.0) * serverStubs.get(0).getValue().getCapacity().doubleValue()));
+					.round(((7.0 / 2.0) * unsecureServerCapacity.doubleValue()));
 			Integer minBetweenOptimalIncrementAndItemsLeftCount = Math.min(operations.size() - operationsIndex,
 					optimalIncrement);
 			Integer increment = (minBetweenOptimalIncrementAndItemsLeftCount >= 0)
@@ -272,6 +280,7 @@ public class Dispatcher {
 			}
 			if(match)
 			{
+				System.out.println("Received result : " + res);
 				result = (result + res) % 4000;
 			}
 			else
