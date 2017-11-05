@@ -121,8 +121,8 @@ public class Dispatcher {
 																		// inferieur a la taille de la liste des
 																		// operations.
 		{
-			if (operationsIndex.equals(operations.size()) && threadsAlive > 0 && threads.stream().anyMatch(
-					i -> ( i != null && i.getState().equals(State.WAITING))) && jobs.stream().allMatch(j -> j.getResult().equals(0))) {
+			if (operationsIndex.equals(operations.size()) && threadsAlive > 0 && threads.stream().filter(i -> i != null).allMatch(
+					i -> (i.getState().equals(State.WAITING))) && jobs.stream().allMatch(j -> j.getResult().equals(0))) {
 				for (int i = 0; i < threads.size(); i++) {
 					if(threads.get(i) != null)
 					{
@@ -165,7 +165,7 @@ public class Dispatcher {
 				}
 				else
 				{
-					if (sems.get(i).getValue().tryAcquire(1, 100, TimeUnit.MILLISECONDS)) {
+					if (sems.get(i).getValue().tryAcquire(1, 10, TimeUnit.MILLISECONDS)) {
 						semaphoreAttempts.set(i, 0);
 						if (jobs.get(i).getResult().equals(-1)) {
 							operations.addAll(jobs.get(i).getOperations());// on popule operations avec la liste des
