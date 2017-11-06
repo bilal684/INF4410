@@ -21,18 +21,24 @@ import ca.polymtl.INF4410.TP2.Dispatcher.JobThreadSecure;
 import ca.polymtl.INF4410.TP2.Shared.IServer;
 import ca.polymtl.INF4410.TP2.Shared.Pair;
 
+/**
+ * Classe representant le repartiteur du systeme.
+ * @author Bilal Itani & Mohameth Alassane Ndiaye
+ *
+ */
 public class Dispatcher {
 
 	private static List<Pair<String, Integer>> operations;
 	private static List<Integer> allServerCapacity;
-	public static List<Pair<String, IServer>> serverStubs = null;
+	private static List<Pair<String, IServer>> serverStubs = null;
 	public static List<Pair<Semaphore, Semaphore>> sems = null;
 	private static List<Integer> semaphoreAttempts = null;
 	private static Set<Integer> indexToSkip = null;
 	private static Integer unsecureServerCapacity = -1;
 
 	/**
-	 * @param args
+	 * Fonction principale du repartiteur.
+	 * @param args arguments d'entre du programme.
 	 * @throws IOException
 	 */
 	public static void main(String[] args) throws IOException {
@@ -55,6 +61,12 @@ public class Dispatcher {
 		}
 	}
 
+	/**
+	 * Methode permettant de charger le stub du serveur
+	 * @param hostname L'adresse IP du serveur
+	 * @param port - Le port sur lequel le serveur de calcul roule
+	 * @return Une paire qui contenant l'adresse IP du serveur et sont port ainsi que le stub en lui meme.
+	 */
 	private static Pair<String, IServer> loadServerStub(String hostname, Integer port) {
 		// IServer stub = null;
 		Pair<String, IServer> stub = null;
@@ -72,6 +84,12 @@ public class Dispatcher {
 		return stub;
 	}
 
+	/**
+	 * Methode permettant d'initialiser le repartiteur. Cette methode va populer les differents stub 
+	 * et initialiser des variables. Elle va aussi creer des semaphores qui seront utilise pour le mode
+	 * securise.
+	 * @param conf soit la configuration du systeme.
+	 */
 	private static void setupDispatcher(Config conf) {
 		serverStubs = new ArrayList<Pair<String, IServer>>();
 		sems = new ArrayList<Pair<Semaphore, Semaphore>>();
@@ -87,6 +105,13 @@ public class Dispatcher {
 		}
 	}
 
+	/**
+	 * Methode permettant de lire les operations contenu dans le fichier donne en argument
+	 * au programme du repartiteur.
+	 * @param filePath emplacement du fichier
+	 * @return Liste contenant une paire ou chaque operation est stocker.
+	 * @throws IOException Si jamais le fichier n'existe pas.
+	 */
 	private static List<Pair<String, Integer>> readOperations(String filePath) throws IOException {
 		File file;
 		FileReader fileReader = null;
@@ -110,6 +135,14 @@ public class Dispatcher {
 		return listOfOperations;
 	}
 
+	/**
+	 * Methode permettant de communiquer avec chacun des serveurs de calcul et de
+	 * repartir la tache de calcul sur chacun des serveurs. Cette methode est utilise
+	 * pour le mode securise uniquement.
+	 * @return Un entier qui represente le resultat des operations
+	 * @throws RemoteException
+	 * @throws InterruptedException
+	 */
 	private static Integer processCalculationSecured() throws RemoteException, InterruptedException {
 		Integer operationsIndex = 0;
 		Integer result = 0;
@@ -216,6 +249,13 @@ public class Dispatcher {
 		return result;
 	}
 
+	/**
+	 * Methode permettant de communiquer avec chacun des serveurs de calcul et de
+	 * repartir la tache de calcul sur chacun des serveurs. Cette methode est utilise
+	 * pour le mode non-securise uniquement.
+	 * @return Un entier qui represente le resultat des operations
+	 * @throws RemoteException
+	 */
 	private static Integer processCalculationUnSecured() throws RemoteException {
 		Integer operationsIndex = 0;
 		Integer result = 0;

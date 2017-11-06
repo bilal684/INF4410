@@ -9,6 +9,12 @@ import java.util.List;
 
 import ca.polymtl.INF4410.TP2.Shared.Pair;
 
+/**
+ * Cette classe permet de lire le fichier "config" et de creer un objet qui la represente.
+ * 
+ * @author Bilal Itani & Mohameth Alassane Ndiaye
+ *
+ */
 public class Config {
 	
 	private static final String CONFIGFILE = "config";
@@ -18,6 +24,11 @@ public class Config {
 	private static Config conf = null;
 	
 	
+	/**
+	 * Methode permettant de construire la config si jamais elle n'existe pas, sinon elle retourne la config (singleton).
+	 * @return Un objet config qui represente la configuration.
+	 * @throws IOException Si jamais le fichier n'est pas trouve.
+	 */
 	public static Config getConfig() throws IOException
 	{
 		if(conf != null)
@@ -31,12 +42,20 @@ public class Config {
 		}
 	}
 	
+	/**
+	 * Constructeur privee (singleton).
+	 * @throws IOException Si jamais le fichier de config n'existe pas.
+	 */
 	private Config() throws IOException
 	{
 		servers = new ArrayList<Pair<String, Integer>>();
 		parseConfig();
 	}
 	
+	/**
+	 * Methode permettant de lire le fichier de config.
+	 * @throws IOException Si jamais le fichier de config n'existe pas.
+	 */
 	private void parseConfig() throws IOException
 	{
 		File configFile;
@@ -74,10 +93,18 @@ public class Config {
 		}
 	}
 
+	/**
+	 * Getter sur la variable servers.
+	 * @return Liste de tous les serveurs present dans la config.
+	 */
 	public List<Pair<String, Integer>> getServers() {
 		return servers;
 	}
 
+	/**
+	 * Getter sur la variable isSecured.
+	 * @return boolean qui indique si le mode actuel est securitaire ou non securitaire.
+	 */
 	public boolean getIsSecured() {
 		return isSecured;
 	}

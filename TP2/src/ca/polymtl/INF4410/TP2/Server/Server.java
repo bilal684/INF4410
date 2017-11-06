@@ -12,15 +12,21 @@ import ca.polymtl.INF4410.TP2.Shared.IServer;
 import ca.polymtl.INF4410.TP2.Shared.Operations;
 import ca.polymtl.INF4410.TP2.Shared.Pair;
 
+/**
+ * Classe representant un server de clacul.
+ * @author Bilal Itani & Mohameth Alassane Ndiaye
+ *
+ */
 public class Server implements IServer {
-	/**
-	 * @param args
-	 */
 
 	private Integer capacity;
 	private Integer lieRate;
 	private Integer port;
 
+	/**
+	 * Fonction principale du programme execute par les serveurs de calcul
+	 * @param args Arguments passe au programme lors de son lancement.
+	 */
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
 		Server server = null;
@@ -36,16 +42,32 @@ public class Server implements IServer {
 		}
 	}
 
+	/**
+	 * Constructeur par parametre de la classe.
+	 * @param capacity Capacite de calcul du serveur.
+	 * @param port Port sur lequel le serveur tourne.
+	 */
 	public Server(Integer capacity, Integer port) {
 		this(capacity, port, null);
 	}
 
+	
+	/**
+	 * Constructeur par parametre principal de la classe.
+	 * @param capacity capacite de calcul du serveur
+	 * @param port Port sur lequel le serveur tourne.
+	 * @param lieRate Pourcentage representant la frequence de mensonge du serveur.
+	 */
 	public Server(Integer capacity, Integer port, Integer lieRate) {
 		this.capacity = capacity;
 		this.port = port;
 		this.lieRate = lieRate;
 	}
 
+
+	/**
+	 * Methode permettant de lier le RMIRegistry avec un objet de cette classe.
+	 */
 	public void run() {
 		if (System.getSecurityManager() == null) {
 			System.setSecurityManager(new SecurityManager());
@@ -65,11 +87,16 @@ public class Server implements IServer {
 		}
 	}
 
+	/**
+	 * Getter sur la variable capacity qui represente la capacite d'un serveur de calcul
+	 * */
 	public Integer getCapacity() throws RemoteException {
-		// TODO Auto-generated method stub
 		return capacity;
 	}
 
+	/**
+	 * Methode permettant de calculer le resultat des operations qui ont ete envoye au serveur.
+	 * */
 	public Integer processOperations(List<Pair<String, Integer>> listOfOperations) throws RemoteException {
 		System.out.println("Received request with size: " + listOfOperations.size());
 		Integer result = 0;
@@ -92,6 +119,12 @@ public class Server implements IServer {
 		return result;
 	}
 
+	/**
+	 * Methode permettant de determiner si le serveur a suffisamment de ressources pour
+	 * effectuer le calcul
+	 * @param operationsSize taille de la liste des operations envoye au serveur de calcul
+	 * @return True s'il y a suffisamment de ressource, false autrement.
+	 */
 	private boolean hasEnoughRessources(Integer operationsSize) {
 		Integer refusalRate = (int) Math.round(
 				(((operationsSize.doubleValue() - capacity.doubleValue()) / (5.0 * capacity.doubleValue())) * 100.0));
@@ -102,11 +135,20 @@ public class Server implements IServer {
 		return (randomVal > refusalRate);
 	}
 
+	/**
+	 * Methode permettant de generer un entier aleatoire dans l'intervalle [0, Integer.MAX_VALUE[.
+	 * @return Un entier aleatoire dans l'intervalle [0, Integer.MAX_VALUE[
+	 */
 	private Integer randomAnswer() {
 		Random r = new Random();
 		return r.nextInt(Integer.MAX_VALUE);
 	}
 
+	/**
+	 * Methode permettant de determiner si un serveur, en mode non securise
+	 * doit mentir ou envoye une reponse valide aux operations qui lui ont ete fourni
+	 * @return True s'il doit mentir, false autrement.
+	 */
 	private boolean feelsLikeLying() {
 		if (lieRate != null) {
 			Random r = new Random();
@@ -116,6 +158,13 @@ public class Server implements IServer {
 		return false;
 	}
 
+	/**
+	 * Methode permettant d'effectuer la somme entre le resultat d'une operation et les 
+	 * resultats anterieurs d'une meme serie d'operations
+	 * @param operationValue Resultat d'une operation
+	 * @param oldResult Somme des resultat des operations anterieur d'une meme serie d'operations
+	 * @return Resultat de la somme
+	 */
 	private Integer processSum(Integer operationValue, Integer oldResult) {
 		return (oldResult + operationValue) % 4000;
 	}
