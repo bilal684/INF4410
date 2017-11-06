@@ -1,0 +1,7 @@
+% mode securise ou non. Valeur possible : "true" ou "false"
+SecureMode:true
+% liste des adresses IP des serveurs avec ports
+IP1:127.0.0.1:5000
+IP2:127.0.0.1:5001
+IP3:127.0.0.1:5002
+%IP4:132.207.12.207:5023

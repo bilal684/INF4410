@@ -229,7 +229,7 @@ public class Dispatcher {
 					}
 					else
 					{
-						if(semaphoreAttempts.get(i) >= 20)
+						if(semaphoreAttempts.get(i) >= 30)
 						{
 							indexToSkip.add(i);
 							jobs.get(i).setResult(0);
