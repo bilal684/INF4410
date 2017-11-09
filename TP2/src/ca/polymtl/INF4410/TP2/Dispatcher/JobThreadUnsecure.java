@@ -6,7 +6,9 @@ import ca.polymtl.INF4410.TP2.Shared.IServer;
 import ca.polymtl.INF4410.TP2.Shared.Pair;
 
 /**
- * Classe representant le travail qui sera effectuer par un thread en mode non-securise.
+ * Classe representant le travail qui sera effectuer par un thread en mode
+ * non-securise.
+ * 
  * @author Bilal Itani & Mohameth Alassane Ndiaye
  *
  */
@@ -18,8 +20,11 @@ public class JobThreadUnsecure implements Runnable {
 
 	/**
 	 * Constructeur par parametre de la classe.
-	 * @param serverStub represente le serveur avec lequel le thread communiquera
-	 * @param operations represente les operations qui seront envoye au serveur de calcul.
+	 * 
+	 * @param serverStub
+	 *            represente le serveur avec lequel le thread communiquera
+	 * @param operations
+	 *            represente les operations qui seront envoye au serveur de calcul.
 	 */
 	public JobThreadUnsecure(Pair<String, IServer> serverStub, List<Pair<String, Integer>> operations) {
 		this.serverStub = serverStub;
@@ -29,7 +34,7 @@ public class JobThreadUnsecure implements Runnable {
 
 	/**
 	 * Methode contenant le code qu'aura a execute le thread.
-	 * */
+	 */
 	public synchronized void run() {
 		// TODO Auto-generated method stub
 		try {
@@ -42,6 +47,7 @@ public class JobThreadUnsecure implements Runnable {
 
 	/**
 	 * Getter sur la variable result
+	 * 
 	 * @return result representant le resultat de l'operation
 	 */
 	public Integer getResult() {
@@ -50,7 +56,9 @@ public class JobThreadUnsecure implements Runnable {
 
 	/**
 	 * Getter sur la variable operations
-	 * @return operations qui represente la liste d'operations executees par le thread.
+	 * 
+	 * @return operations qui represente la liste d'operations executees par le
+	 *         thread.
 	 */
 	public List<Pair<String, Integer>> getOperations() {
 		return operations;

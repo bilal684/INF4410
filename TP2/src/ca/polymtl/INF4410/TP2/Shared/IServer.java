@@ -5,7 +5,9 @@ import java.rmi.RemoteException;
 import java.util.List;
 
 /**
- * Interface contenant les operations obligatoires que le serveur doit exposer aux repartiteur
+ * Interface contenant les operations obligatoires que le serveur doit exposer
+ * aux repartiteur
+ * 
  * @author Bilal Itani & Mohameth Alassane Ndiaye
  *
  */
