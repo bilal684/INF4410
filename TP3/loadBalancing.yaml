@@ -1,0 +1,107 @@
+heat_template_version: 2014-10-16
+
+description: A template to deploy a load balanced web server
+
+parameters:
+  key_name:
+    type: string
+    description: Name of an existing key pair to use for the server
+    default: INF4410-17
+    constraints:
+      - custom_constraint: nova.keypair
+      
+  flavor:
+    type: string
+    description: Flavor for the server to be created
+    default: INF4410-mini
+    constraints:
+      - custom_constraint: nova.flavor
+      
+  image:
+    type: string
+    description: Image ID or image name to use for the server
+    default: INF4410-Ubuntu-trusty-mini
+    constraints:
+      - custom_constraint: glance.image
+      
+  network:
+    type: string
+    description: Network the virtual machine will be on
+    default: inf4410-net
+    
+  python_script_url:
+    type: string
+    description: Location of the script to be executed on the machine
+    default: https://raw.githubusercontent.com/houssemmh/INF4410-TP3/master/server.py
+    
+  subnet_id:
+    type: string
+    description: Subnet on which the load balancer will be used
+    default: 6579eb07-88c3-4707-9c6e-ab90a78cca02
+    
+  external_network_id:
+    type: string
+    description: ID of a Neutron external network
+    default: 0c3b1354-d3d5-4fec-86d3-19d4d1f13785
+
+resources:
+  web_nodes:
+    type: OS::Heat::ResourceGroup
+    properties:
+      count: 2
+      resource_def:
+        type: OS::Nova::Server
+        properties:
+          key_name: { get_param: key_name }
+          image: { get_param: image }
+          flavor: { get_param: flavor }
+          networks:
+            - network: {get_param: network }
+          user_data_format: RAW
+          user_data:
+            str_replace:
+              template: |
+                #!/bin/bash
+                wget $python_script_location
+                python server.py
+              params:
+                $python_script_location: {get_param: python_script_url }
+
+  pool:
+      type: OS::Neutron::Pool
+      properties:
+        protocol: HTTP
+        monitors: [{get_resource: monitor}]
+        subnet_id: {get_param: subnet_id}
+        lb_method: ROUND_ROBIN
+        vip:
+          protocol_port: 8000
+
+  lbalancer:
+      type: OS::Neutron::LoadBalancer
+      properties:
+        protocol_port: 8000
+        pool_id: { get_resource: pool }
+        members: { get_attr: [web_nodes, refs] }
+
+  lb_floating:
+    type: OS::Neutron::FloatingIP
+    properties:
+      floating_network_id: {get_param: external_network_id}
+      port_id: {get_attr: [pool, vip, port_id]}
+
+  monitor:
+      type: OS::Neutron::HealthMonitor
+      properties:
+        type: TCP
+        delay: 8
+        max_retries: 2
+        timeout: 5
+
+outputs:
+  pool_ip_address:
+    value: {get_attr: [pool, vip, address]}
+    description: The IP address of the load balancing pool
+  lb_floating:
+    description: The floating IP address of the load balancing pool
+    value: { get_attr: [lb_floating, floating_ip_address] }
