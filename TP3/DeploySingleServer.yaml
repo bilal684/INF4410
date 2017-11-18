@@ -31,8 +31,15 @@ parameters:
     type: string
     description: Location of the script to be executed on the machine
     default: https://raw.githubusercontent.com/houssemmh/INF4410-TP3/master/server.py
-
+  external_network_id:
+    type: string
+    description: ID of a Neutron external network
+    default: 0c3b1354-d3d5-4fec-86d3-19d4d1f13785
 resources:
+  floating_ip:
+    type: OS::Neutron::FloatingIP
+    properties:
+      floating_network_id: { get_param: external_network_id }
   server:
     type: OS::Nova::Server
     properties:
@@ -50,8 +57,17 @@ resources:
             python server.py
           params:
             $python_script_location: {get_param: python_script_url }
+  association:
+    type: OS::Nova::FloatingIPAssociation
+    properties:
+      floating_ip: { get_resource: floating_ip }
+      server_id: { get_resource: server }
+
 
 outputs:
   server_networks:
     description: The networks of the deployed server
     value: { get_attr: [server, networks] }
+  instance_floating_ip:
+    description: The IP address of the instance which is accessible by the internet
+    value: { get_attr: [floating_ip, floating_ip_address] }
