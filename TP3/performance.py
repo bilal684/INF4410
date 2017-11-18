@@ -1,19 +1,18 @@
-# Example 2: asynchronous requests
-import asyncio
-import requests
+from threading import Thread
+from urllib.request import urlopen
+from time import sleep
+import sys
+def main(ip, port):
+	threads = []
+	for i in range(0,20):
+		t = Thread(target=callRequestToServer, args=["http://"+ ip + ":" + port])
+		t.start()
+		threads.append(t)
+		sleep(0.05)
+	for t in threads:
+		t.join()
 
-async def main():
-    loop = asyncio.get_event_loop()
-    futures = [
-        loop.run_in_executor(
-            None, 
-            requests.get, 
-            'http://132.207.12.99:8000/'
-        )
-        for i in range(40)
-    ]
-    for response in await asyncio.gather(*futures):
-        pass
-
-loop = asyncio.get_event_loop()
-loop.run_until_complete(main())
+def callRequestToServer(url):
+	return urlopen(url)
+	
+main(str(sys.argv[1]), str(sys.argv[2]))
