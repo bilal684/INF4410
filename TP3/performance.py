@@ -4,11 +4,11 @@ from time import sleep
 import sys
 def main(ip, port):
 	threads = []
-	for i in range(0,20):
+	for i in range(0,40):
 		t = Thread(target=callRequestToServer, args=["http://"+ ip + ":" + port])
 		t.start()
 		threads.append(t)
-		sleep(0.05)
+		sleep(0.1)
 	for t in threads:
 		t.join()
 
