@@ -1,5 +1,7 @@
 1 Server - no load balancing :
-31.308618783950806 seconds
+Total execution time : 30.093722343444824 seconds
+Total execution time per request : 0.7523430585861206 seconds
 
 2 Servers with load balancing :
-20.314380645751953 seconds
+Total execution time : 20.318615436553955 seconds
+Total execution time per request : 0.5079653859138489 seconds

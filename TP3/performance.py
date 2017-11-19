@@ -15,7 +15,8 @@ def main(ip):
 	for t in threads:
 		t.join()
 	end = time.time()
-	print("Execution time : " + str(end - start) + " seconds")
+	print("Total execution time : " + str(end - start) + " seconds")
+	print("Total execution time per request : " + str((end - start)/40.0) + " seconds")
 
 def callRequestToServer(url):
 	return urlopen(url)
