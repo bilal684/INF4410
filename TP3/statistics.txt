@@ -1,0 +1,5 @@
+1 Server - no load balancing :
+31.308618783950806 seconds
+
+2 Servers with load balancing :
+20.314380645751953 seconds
